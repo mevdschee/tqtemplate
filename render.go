@@ -76,11 +76,20 @@ func (t *Template) renderChildren(node *TreeNode, data map[string]any, functions
 // renderIfNode renders an 'if' conditional node
 func (t *Template) renderIfNode(node *TreeNode, data map[string]any, functions map[string]any) (string, error) {
 	expressionStr := node.Expression
-	parts := t.explodeRespectingQuotes("|", expressionStr, -1)
-	exprPart := parts[0]
+
+	// Preprocess "is" tests
+	exprPart, testFilter := processIsTests(expressionStr)
+
+	parts := t.explodeRespectingQuotes("|", exprPart, -1)
+	actualExpr := parts[0]
 	filterParts := parts[1:]
 
-	expr := NewExpression(exprPart)
+	// Add test filter if present
+	if testFilter != "" {
+		filterParts = append(filterParts, testFilter)
+	}
+
+	expr := NewExpression(actualExpr)
 	value, err := expr.Evaluate(data, t.resolvePath)
 	if err != nil {
 		return t.escapeValue("{% if " + expressionStr + "!!" + err.Error() + " %}"), nil
@@ -120,11 +129,20 @@ func (t *Template) renderElseIfNode(node *TreeNode, ifNodes []*TreeNode, data ma
 
 	if !anyTrue {
 		expressionStr := node.Expression
-		parts := t.explodeRespectingQuotes("|", expressionStr, -1)
-		exprPart := parts[0]
+
+		// Preprocess "is" tests
+		exprPart, testFilter := processIsTests(expressionStr)
+
+		parts := t.explodeRespectingQuotes("|", exprPart, -1)
+		actualExpr := parts[0]
 		filterParts := parts[1:]
 
-		expr := NewExpression(exprPart)
+		// Add test filter if present
+		if testFilter != "" {
+			filterParts = append(filterParts, testFilter)
+		}
+
+		expr := NewExpression(actualExpr)
 		value, err := expr.Evaluate(data, t.resolvePath)
 		if err != nil {
 			return t.escapeValue("{% elseif " + expressionStr + "!!" + err.Error() + " %}"), nil
@@ -260,11 +278,20 @@ func (t *Template) renderForNode(node *TreeNode, data map[string]any, functions 
 // renderVarNode renders a variable interpolation node
 func (t *Template) renderVarNode(node *TreeNode, data map[string]any, functions map[string]any) (string, error) {
 	expressionStr := node.Expression
-	parts := t.explodeRespectingQuotes("|", expressionStr, -1)
-	exprPart := parts[0]
+
+	// Preprocess "is" tests
+	exprPart, testFilter := processIsTests(expressionStr)
+
+	parts := t.explodeRespectingQuotes("|", exprPart, -1)
+	actualExpr := parts[0]
 	filterParts := parts[1:]
 
-	expr := NewExpression(exprPart)
+	// Add test filter if present
+	if testFilter != "" {
+		filterParts = append(filterParts, testFilter)
+	}
+
+	expr := NewExpression(actualExpr)
 	value, err := expr.Evaluate(data, t.resolvePath)
 	if err != nil {
 		return t.escapeValue("{{" + expressionStr + "!!" + err.Error() + "}}"), nil
@@ -322,6 +349,12 @@ func (t *Template) applyFunctions(value any, parts []string, functions map[strin
 					unescaped = strings.ReplaceAll(unescaped, "\\\"", "\"")
 					unescaped = strings.ReplaceAll(unescaped, "\\\\", "\\")
 					arguments = append(arguments, unescaped)
+				} else if argStr == "true" {
+					// Boolean literal - true
+					arguments = append(arguments, true)
+				} else if argStr == "false" {
+					// Boolean literal - false
+					arguments = append(arguments, false)
 				} else if num, err := strconv.ParseFloat(argStr, 64); err == nil {
 					// Numeric literal - convert to appropriate numeric type
 					if strings.Contains(argStr, ".") {

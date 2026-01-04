@@ -3,8 +3,9 @@
 ## Overview
 
 TQTemplate engine provides a simple yet powerful templating system with variable
-interpolation, control structures, filters, and expression evaluation. Templates
-are HTML-safe by default with automatic escaping.
+interpolation, control structures, filters, and expression evaluation. Designed 
+specifically for HTML output, all variable interpolation is automatically escaped 
+for security.
 
 ## BNF Syntax
 
@@ -1452,10 +1453,316 @@ Included templates can themselves include other templates.
 
 ---
 
+## Builtin Filters
+
+TQTemplate includes a comprehensive set of builtin filters for common data transformations. Filters are applied using the pipe (`|`) syntax.
+
+### String Filters
+
+#### `lower`
+
+Convert a string to lowercase.
+
+```
+{{ "HELLO"|lower }}
+→ hello
+```
+
+#### `upper`
+
+Convert a string to uppercase.
+
+```
+{{ "hello"|upper }}
+→ HELLO
+```
+
+#### `capitalize`
+
+Capitalize the first character of a string.
+
+```
+{{ "hello world"|capitalize }}
+→ Hello world
+```
+
+#### `title`
+
+Convert a string to title case (capitalize first letter of each word).
+
+```
+{{ "hello world"|title }}
+→ Hello World
+```
+
+#### `trim`
+
+Remove leading and trailing whitespace.
+
+```
+{{ "  hello  "|trim }}
+→ hello
+```
+
+#### `truncate(length, end)`
+
+Truncate a string to a maximum length. Default length is 255, default end is "...".
+
+```
+{{ "Hello World"|truncate(8) }}
+→ Hello...
+
+{{ "Hello World"|truncate(8, ">>") }}
+→ Hello W>>
+```
+
+#### `replace(old, new, count)`
+
+Replace occurrences of a substring. If count is omitted, replaces all occurrences.
+
+```
+{{ "Hello World"|replace("Hello", "Goodbye") }}
+→ Goodbye World
+
+{{ "aaaaargh"|replace("a", "d'oh, ", 2) }}
+→ d'oh, d'oh, aaargh
+```
+
+#### `split(separator)`
+
+Split a string into a slice. Empty separator splits into characters.
+
+```
+{{ "1,2,3"|split(",")|join("|") }}
+→ 1|2|3
+
+{{ "123"|split|join("|") }}
+→ 1|2|3
+```
+
+#### `urlencode`
+
+Encode a string for use in URLs.
+
+```
+{{ "hello world"|urlencode }}
+→ hello+world
+
+{{ "hello&world=test"|urlencode }}
+→ hello%26world%3Dtest
+```
+
+### Numeric Filters
+
+#### `abs`
+
+Return the absolute value of a number.
+
+```
+{{ -42|abs }}
+→ 42
+
+{{ 3.14|abs }}
+→ 3.14
+```
+
+#### `round(precision, method)`
+
+Round a number to a given precision. Default precision is 0, default method is "common".
+
+Available methods:
+- `common` or `up` - Round half up (default)
+- `ceil` - Always round up
+- `floor` - Always round down
+- `down` - Round half down
+- `even` or `banker` - Round half to even
+- `odd` - Round half to odd
+- `awayzero` - Round half away from zero
+- `tozero` - Round half towards zero
+
+```
+{{ 42.55|round }}
+→ 43
+
+{{ 42.55|round(1, "floor") }}
+→ 42.5
+
+{{ 2.5|round(0, "even") }}
+→ 2
+```
+
+#### `sprintf(format)`
+
+Apply sprintf-style formatting to a value.
+
+```
+{{ 3.14159|sprintf("%.2f") }}
+→ 3.14
+
+{{ 42|sprintf("%05d") }}
+→ 00042
+```
+
+#### `filesizeformat(binary)`
+
+Format a number as a human-readable file size. Use binary=true for binary prefixes (KiB, MiB).
+
+```
+{{ 13000|filesizeformat }}
+→ 13.0 kB
+
+{{ 1024|filesizeformat(true) }}
+→ 1.0 KiB
+
+{{ 1500000|filesizeformat }}
+→ 1.5 MB
+```
+
+### Array/Collection Filters
+
+#### `length` / `count`
+
+Return the number of items in a collection.
+
+```
+{{ [1, 2, 3]|length }}
+→ 3
+
+{{ "hello"|length }}
+→ 5
+```
+
+#### `first(n)`
+
+Return the first item or first n items of a slice.
+
+```
+{{ [1, 2, 3, 4]|first }}
+→ 1
+
+{{ [1, 2, 3, 4]|first(2) }}
+→ [1, 2]
+```
+
+#### `last(n)`
+
+Return the last item or last n items of a slice.
+
+```
+{{ [1, 2, 3, 4]|last }}
+→ 4
+
+{{ [1, 2, 3, 4]|last(2) }}
+→ [3, 4]
+```
+
+#### `join(separator, attribute)`
+
+Concatenate items in a slice with a separator. Can optionally join by attribute.
+
+```
+{{ [1, 2, 3]|join("|") }}
+→ 1|2|3
+
+{{ [1, 2, 3]|join }}
+→ 123
+
+{{ users|join(", ", "username") }}
+→ alice, bob, charlie
+```
+
+#### `reverse`
+
+Reverse a slice or string.
+
+```
+{{ [1, 2, 3]|reverse }}
+→ [3, 2, 1]
+
+{{ "hello"|reverse }}
+→ olleh
+```
+
+#### `sum(attribute)`
+
+Return the sum of numbers in a slice. Can optionally sum by attribute.
+
+```
+{{ [1, 2, 3]|sum }}
+→ 6
+
+{{ items|sum("price") }}
+→ 150.50
+```
+
+### Utility Filters
+
+#### `default(value, boolean)`
+
+Return a default value if the input is nil or (with boolean=true) falsy.
+
+```
+{{ missing_var|default("N/A") }}
+→ N/A
+
+{{ ""|default("empty", true) }}
+→ empty
+
+{{ 0|default("zero", true) }}
+→ zero
+```
+
+#### `attr(name)`
+
+Get an attribute of an object by name.
+
+```
+{{ user|attr("email") }}
+→ user@example.com
+
+{{ data|attr("nested")|attr("value") }}
+→ 42
+```
+
+#### `debug` / `d`
+
+Pretty print a value for debugging (outputs JSON).
+
+```
+{{ user|debug }}
+→ {
+  "name": "Alice",
+  "email": "alice@example.com"
+}
+```
+
+#### `raw`
+
+Mark a value as safe HTML that should not be escaped.
+
+```
+{{ "<strong>Bold</strong>"|raw }}
+→ <strong>Bold</strong>
+```
+
+### Filter Chaining
+
+Filters can be chained together:
+
+```
+{{ "  hello world  "|trim|upper|replace("WORLD", "FRIEND") }}
+→ HELLO FRIEND
+
+{{ items|first(3)|reverse|join(", ") }}
+→ 3, 2, 1
+```
+
+---
+
 ## Custom Filters
 
-Filters can be provided as custom functions when rendering templates. The `raw`
-filter is built-in.
+Filters can be provided as custom functions when rendering templates. All builtin
+filters listed above are available automatically.
 
 **PHP Usage Example:**
 
@@ -1465,8 +1772,6 @@ $template = new Template('html');
 $data = ['name' => 'john doe', 'date' => 'May 13, 1980'];
 
 $functions = [
-    'upper' => 'strtoupper',
-    'capitalize' => 'ucfirst',
     'dateFormat' => fn($date, $format) => date($format, strtotime($date))
 ];
 

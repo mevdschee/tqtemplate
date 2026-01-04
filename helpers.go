@@ -91,11 +91,24 @@ func compare(left, right any) int {
 // callFunction calls a function with the given arguments
 func callFunction(fn any, args []any) (any, error) {
 	switch f := fn.(type) {
+	// RawValue functions
+	case func(any) RawValue:
+		if len(args) > 0 {
+			return f(args[0]), nil
+		}
+		return nil, fmt.Errorf("invalid arguments for function")
 	case func(string) RawValue:
 		if len(args) > 0 {
 			if str, ok := args[0].(string); ok {
 				return f(str), nil
 			}
+		}
+		return nil, fmt.Errorf("invalid arguments for function")
+
+	// String functions
+	case func(any) string:
+		if len(args) > 0 {
+			return f(args[0]), nil
 		}
 		return nil, fmt.Errorf("invalid arguments for function")
 	case func(string) string:
@@ -106,6 +119,59 @@ func callFunction(fn any, args []any) (any, error) {
 	case func(string, string) string:
 		if len(args) >= 2 {
 			return f(toString(args[0]), toString(args[1])), nil
+		}
+		return nil, fmt.Errorf("invalid arguments for function")
+	case func(any, ...any) string:
+		if len(args) > 0 {
+			return f(args[0], args[1:]...), nil
+		}
+		return nil, fmt.Errorf("invalid arguments for function")
+
+	// Int functions
+	case func(any) int:
+		if len(args) > 0 {
+			return f(args[0]), nil
+		}
+		return nil, fmt.Errorf("invalid arguments for function")
+
+	// Float64 functions
+	case func(any) float64:
+		if len(args) > 0 {
+			return f(args[0]), nil
+		}
+		return nil, fmt.Errorf("invalid arguments for function")
+	case func(any, ...any) float64:
+		if len(args) > 0 {
+			return f(args[0], args[1:]...), nil
+		}
+		return nil, fmt.Errorf("invalid arguments for function")
+
+	// Any functions (generic)
+	case func(any) any:
+		if len(args) > 0 {
+			return f(args[0]), nil
+		}
+		return nil, fmt.Errorf("invalid arguments for function")
+	case func(any, any) any:
+		if len(args) >= 2 {
+			return f(args[0], args[1]), nil
+		}
+		return nil, fmt.Errorf("invalid arguments for function")
+	case func(any, ...any) any:
+		if len(args) > 0 {
+			return f(args[0], args[1:]...), nil
+		}
+		return nil, fmt.Errorf("invalid arguments for function")
+
+	// Boolean functions
+	case func(any) bool:
+		if len(args) > 0 {
+			return f(args[0]), nil
+		}
+		return nil, fmt.Errorf("invalid arguments for function")
+	case func(any, ...any) bool:
+		if len(args) > 0 {
+			return f(args[0], args[1:]...), nil
 		}
 		return nil, fmt.Errorf("invalid arguments for function")
 	case func(any, any) bool:
@@ -120,6 +186,7 @@ func callFunction(fn any, args []any) (any, error) {
 			return f(int(left), int(right)), nil
 		}
 		return nil, fmt.Errorf("invalid arguments for function")
+
 	default:
 		return nil, fmt.Errorf("unsupported function type")
 	}

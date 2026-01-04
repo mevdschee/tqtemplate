@@ -23,18 +23,17 @@ type TemplateLoader func(name string) (string, error)
 
 // Template is the main template engine
 type Template struct {
-	escape string
 	loader TemplateLoader
 }
 
-// NewTemplate creates a new template engine with the specified escape type
-func NewTemplate(escape string) *Template {
-	return &Template{escape: escape, loader: nil}
+// NewTemplate creates a new template engine
+func NewTemplate() *Template {
+	return &Template{loader: nil}
 }
 
 // NewTemplateWithLoader creates a new template engine with a custom template loader
-func NewTemplateWithLoader(escape string, loader TemplateLoader) *Template {
-	return &Template{escape: escape, loader: loader}
+func NewTemplateWithLoader(loader TemplateLoader) *Template {
+	return &Template{loader: loader}
 }
 
 // Render renders a template string with the provided data and custom functions
@@ -42,12 +41,27 @@ func (t *Template) Render(template string, data map[string]any, functions map[st
 	tokens := t.tokenize(template)
 	tree := t.createSyntaxTree(tokens)
 
-	// Add built-in 'raw' filter
+	// Add built-in filters and tests
 	if functions == nil {
 		functions = make(map[string]any)
 	}
-	functions["raw"] = func(value string) RawValue {
-		return RawValue{Value: value}
+
+	// Register all builtin filters
+	builtins := getBuiltinFilters()
+	for name, fn := range builtins {
+		// Only add if not already defined (allow user overrides)
+		if _, exists := functions[name]; !exists {
+			functions[name] = fn
+		}
+	}
+
+	// Register all builtin tests
+	tests := getBuiltinTests()
+	for name, fn := range tests {
+		// Only add if not already defined (allow user overrides)
+		if _, exists := functions[name]; !exists {
+			functions[name] = fn
+		}
 	}
 
 	// Check if this template extends another template
@@ -60,16 +74,13 @@ func (t *Template) Render(template string, data map[string]any, functions map[st
 	return t.renderChildren(tree, data, functions)
 }
 
-// escapeValue escapes a value based on the escape type
+// escapeValue escapes a value for HTML output
 func (t *Template) escapeValue(value any) string {
 	if rawVal, ok := value.(RawValue); ok {
 		return rawVal.Value
 	}
 	str := toString(value)
-	if t.escape == "html" {
-		return html.EscapeString(str)
-	}
-	return str
+	return html.EscapeString(str)
 }
 
 // tokenize splits a template into literal text and expressions

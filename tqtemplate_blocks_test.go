@@ -18,7 +18,7 @@ Default Title
 Default Content
 </html>`
 
-	template := NewTemplate("html")
+	template := NewTemplate()
 	result, err := template.Render(tmpl, map[string]any{}, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -66,7 +66,7 @@ func TestExtendsWithBlockOverride(t *testing.T) {
 </body>
 </html>`
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	result, err := template.Render(childTmpl, map[string]any{}, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -117,7 +117,7 @@ func TestExtendsWithPartialOverride(t *testing.T) {
 </body>
 </html>`
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	result, err := template.Render(childTmpl, map[string]any{}, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -173,7 +173,7 @@ func TestExtendsWithVariables(t *testing.T) {
 </body>
 </html>`
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	result, err := template.Render(childTmpl, data, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -251,7 +251,7 @@ func TestExtendsWithControlStructures(t *testing.T) {
 </body>
 </html>`
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	result, err := template.Render(childTmpl, data, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -266,7 +266,7 @@ func TestExtendsWithoutLoader(t *testing.T) {
 	childTmpl := `{% extends 'base.html' %}
 {% block content %}Test{% endblock %}`
 
-	template := NewTemplate("html")
+	template := NewTemplate()
 	_, err := template.Render(childTmpl, map[string]any{}, nil)
 	if err == nil {
 		t.Error("Expected error when loader not configured")
@@ -285,7 +285,7 @@ func TestExtendsTemplateNotFound(t *testing.T) {
 	childTmpl := `{% extends 'nonexistent.html' %}
 {% block content %}Test{% endblock %}`
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	_, err := template.Render(childTmpl, map[string]any{}, nil)
 	if err == nil {
 		t.Error("Expected error when parent template not found")
@@ -326,7 +326,7 @@ Custom inner content
   </div>
 </div>`
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	result, err := template.Render(childTmpl, map[string]any{}, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -363,7 +363,7 @@ func TestEmptyBlocks(t *testing.T) {
 <body></body>
 </html>`
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	result, err := template.Render(childTmpl, map[string]any{}, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -391,7 +391,7 @@ func TestBlockInheritanceNoIndentationPreservation(t *testing.T) {
 	// Expected: child content is NOT indented (replaces block completely)
 	expected := "<html>\n  <body>\n    <div>\n<h1>Title</h1>\n<p>Text</p>\n    </div>\n  </body>\n</html>"
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	result, err := template.Render(childTmpl, map[string]any{}, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -415,7 +415,7 @@ func TestIncludeBasic(t *testing.T) {
 		return "", fmt.Errorf("template not found: %s", name)
 	}
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	result, err := template.Render(templates["main.html"], map[string]any{}, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -445,7 +445,7 @@ func TestIncludeWithVariables(t *testing.T) {
 		"name": "Alice",
 	}
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	result, err := template.Render(templates["main.html"], data, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -472,7 +472,7 @@ func TestMultipleIncludes(t *testing.T) {
 		return "", fmt.Errorf("template not found: %s", name)
 	}
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	result, err := template.Render(templates["main.html"], map[string]any{}, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -502,7 +502,7 @@ func TestIncludeWithControlStructures(t *testing.T) {
 		"items": []any{"Apple", "Banana", "Cherry"},
 	}
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	result, err := template.Render(templates["main.html"], data, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -516,7 +516,7 @@ func TestIncludeWithControlStructures(t *testing.T) {
 
 // Test include without loader
 func TestIncludeWithoutLoader(t *testing.T) {
-	template := NewTemplate("html")
+	template := NewTemplate()
 	_, err := template.Render("{% include 'header.html' %}", map[string]any{}, nil)
 	if err == nil {
 		t.Error("Expected error when loader not configured")
@@ -532,7 +532,7 @@ func TestIncludeTemplateNotFound(t *testing.T) {
 		return "", fmt.Errorf("template not found: %s", name)
 	}
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	_, err := template.Render("{% include 'missing.html' %}", map[string]any{}, nil)
 	if err == nil {
 		t.Error("Expected error when template not found")
@@ -557,7 +557,7 @@ func TestNestedIncludes(t *testing.T) {
 		return "", fmt.Errorf("template not found: %s", name)
 	}
 
-	template := NewTemplateWithLoader("html", loader)
+	template := NewTemplateWithLoader(loader)
 	result, err := template.Render(templates["top.html"], map[string]any{}, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)

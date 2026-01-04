@@ -9,7 +9,7 @@ import (
 var template *Template
 
 func init() {
-	template = NewTemplate("html")
+	template = NewTemplate()
 }
 
 func TestRenderWithCustomFunction(t *testing.T) {
@@ -205,14 +205,6 @@ func TestRawEscape(t *testing.T) {
 	result, _ := template.Render("{{ a|raw }}", map[string]any{"a": "<script>alert(\"xss\")</script>"}, nil)
 	if result != "<script>alert(\"xss\")</script>" {
 		t.Errorf("Expected raw output, got '%s'", result)
-	}
-}
-
-func TestNoEscape(t *testing.T) {
-	tmpl := NewTemplate("none")
-	result, _ := tmpl.Render("{{ a }}", map[string]any{"a": "<script>alert(\"xss\")</script>"}, nil)
-	if result != "<script>alert(\"xss\")</script>" {
-		t.Errorf("Expected no escaping, got '%s'", result)
 	}
 }
 
@@ -1167,5 +1159,244 @@ func TestExpressionWithNewlineInElseIfCondition(t *testing.T) {
 	result, _ := template.Render(tmpl, map[string]any{"a": 7}, nil)
 	if result != "second" {
 		t.Errorf("Expected 'second', got '%s'", result)
+	}
+}
+
+// Tests for builtin test functions
+
+func TestIsDefined(t *testing.T) {
+	tmpl := "{% if variable is defined %}yes{% else %}no{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{"variable": "value"}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test undefined variable
+	tmpl = "{% if missing is defined %}yes{% else %}no{% endif %}"
+	result, _ = template.Render(tmpl, map[string]any{}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+}
+
+func TestIsUndefined(t *testing.T) {
+	tmpl := "{% if missing is undefined %}yes{% else %}no{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test defined variable
+	tmpl = "{% if variable is undefined %}yes{% else %}no{% endif %}"
+	result, _ = template.Render(tmpl, map[string]any{"variable": "value"}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+}
+
+func TestIsEven(t *testing.T) {
+	tmpl := "{% if num is even %}yes{% else %}no{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{"num": 4}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test odd number
+	result, _ = template.Render(tmpl, map[string]any{"num": 5}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+}
+
+func TestIsOdd(t *testing.T) {
+	tmpl := "{% if num is odd %}yes{% else %}no{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{"num": 5}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test even number
+	result, _ = template.Render(tmpl, map[string]any{"num": 4}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+}
+
+func TestIsDivisibleBy(t *testing.T) {
+	tmpl := "{% if num is divisibleby(3) %}yes{% else %}no{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{"num": 9}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test not divisible
+	result, _ = template.Render(tmpl, map[string]any{"num": 10}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+
+	// Test divisible by 2
+	tmpl = "{% if num is divisibleby(2) %}yes{% else %}no{% endif %}"
+	result, _ = template.Render(tmpl, map[string]any{"num": 8}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+}
+
+func TestIsIterable(t *testing.T) {
+	tmpl := "{% if items is iterable %}yes{% else %}no{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{"items": []any{1, 2, 3}}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test non-iterable
+	result, _ = template.Render(tmpl, map[string]any{"items": 123}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+
+	// Test string is iterable
+	result, _ = template.Render(tmpl, map[string]any{"items": "hello"}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+}
+
+func TestIsLower(t *testing.T) {
+	tmpl := "{% if text is lower %}yes{% else %}no{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{"text": "hello"}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test uppercase
+	result, _ = template.Render(tmpl, map[string]any{"text": "HELLO"}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+
+	// Test mixed case
+	result, _ = template.Render(tmpl, map[string]any{"text": "Hello"}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+}
+
+func TestIsUpper(t *testing.T) {
+	tmpl := "{% if text is upper %}yes{% else %}no{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{"text": "HELLO"}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test lowercase
+	result, _ = template.Render(tmpl, map[string]any{"text": "hello"}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+
+	// Test mixed case
+	result, _ = template.Render(tmpl, map[string]any{"text": "Hello"}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+}
+
+func TestIsNull(t *testing.T) {
+	tmpl := "{% if value is null %}yes{% else %}no{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{"value": nil}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test non-null
+	result, _ = template.Render(tmpl, map[string]any{"value": "something"}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+}
+
+func TestIsNumber(t *testing.T) {
+	tmpl := "{% if value is number %}yes{% else %}no{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{"value": 42}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test float
+	result, _ = template.Render(tmpl, map[string]any{"value": 3.14}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test string number
+	result, _ = template.Render(tmpl, map[string]any{"value": "123"}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test non-number string
+	result, _ = template.Render(tmpl, map[string]any{"value": "hello"}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+}
+
+func TestIsString(t *testing.T) {
+	tmpl := "{% if value is string %}yes{% else %}no{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{"value": "hello"}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test number
+	result, _ = template.Render(tmpl, map[string]any{"value": 123}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+}
+
+func TestIsNotTest(t *testing.T) {
+	tmpl := "{% if value is not null %}yes{% else %}no{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{"value": "something"}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	// Test with null value
+	result, _ = template.Render(tmpl, map[string]any{"value": nil}, nil)
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+}
+
+func TestIsTestInVariable(t *testing.T) {
+	tmpl := "{{ num is even }}"
+	result, _ := template.Render(tmpl, map[string]any{"num": 4}, nil)
+	if result != "1" {
+		t.Errorf("Expected '1', got '%s'", result)
+	}
+
+	// Test false case
+	result, _ = template.Render(tmpl, map[string]any{"num": 5}, nil)
+	if result != "" {
+		t.Errorf("Expected '', got '%s'", result)
+	}
+}
+
+func TestIsTestWithComplexExpression(t *testing.T) {
+	tmpl := "{% if (num + 1) is even %}yes{% else %}no{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{"num": 3}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+}
+
+func TestMultipleIsTests(t *testing.T) {
+	tmpl := "{% if a is defined %}{% if a is even %}yes{% else %}no{% endif %}{% endif %}"
+	result, _ := template.Render(tmpl, map[string]any{"a": 4}, nil)
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
 	}
 }
