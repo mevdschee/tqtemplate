@@ -1823,7 +1823,7 @@ Check if a variable is undefined (nil). Opposite of `defined`.
 {% endif %}
 ```
 
-#### `null` / `none`
+#### `null`
 
 Check if a value is nil.
 
@@ -1892,26 +1892,6 @@ Check if a value can be iterated over (array, map, or string).
     {% for item in items %}
         {{ item }}
     {% endfor %}
-{% endif %}
-```
-
-#### `lower`
-
-Check if a string is all lowercase (contains at least one letter).
-
-```
-{% if text is lower %}
-    Text is lowercase
-{% endif %}
-```
-
-#### `upper`
-
-Check if a string is all uppercase (contains at least one letter).
-
-```
-{% if text is upper %}
-    Text is uppercase
 {% endif %}
 ```
 

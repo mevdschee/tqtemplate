@@ -1263,46 +1263,6 @@ func TestIsIterable(t *testing.T) {
 	}
 }
 
-func TestIsLower(t *testing.T) {
-	tmpl := "{% if text is lower %}yes{% else %}no{% endif %}"
-	result, _ := template.Render(tmpl, map[string]any{"text": "hello"}, nil)
-	if result != "yes" {
-		t.Errorf("Expected 'yes', got '%s'", result)
-	}
-
-	// Test uppercase
-	result, _ = template.Render(tmpl, map[string]any{"text": "HELLO"}, nil)
-	if result != "no" {
-		t.Errorf("Expected 'no', got '%s'", result)
-	}
-
-	// Test mixed case
-	result, _ = template.Render(tmpl, map[string]any{"text": "Hello"}, nil)
-	if result != "no" {
-		t.Errorf("Expected 'no', got '%s'", result)
-	}
-}
-
-func TestIsUpper(t *testing.T) {
-	tmpl := "{% if text is upper %}yes{% else %}no{% endif %}"
-	result, _ := template.Render(tmpl, map[string]any{"text": "HELLO"}, nil)
-	if result != "yes" {
-		t.Errorf("Expected 'yes', got '%s'", result)
-	}
-
-	// Test lowercase
-	result, _ = template.Render(tmpl, map[string]any{"text": "hello"}, nil)
-	if result != "no" {
-		t.Errorf("Expected 'no', got '%s'", result)
-	}
-
-	// Test mixed case
-	result, _ = template.Render(tmpl, map[string]any{"text": "Hello"}, nil)
-	if result != "no" {
-		t.Errorf("Expected 'no', got '%s'", result)
-	}
-}
-
 func TestIsNull(t *testing.T) {
 	tmpl := "{% if value is null %}yes{% else %}no{% endif %}"
 	result, _ := template.Render(tmpl, map[string]any{"value": nil}, nil)
