@@ -241,7 +241,8 @@ are HTML-safe by default with automatic escaping.
 
     {% if user.is_admin %}
     <span class="badge">Administrator</span>
-    {% endif %} {% if user.age >= 18 %}
+    {% endif %}
+    {% if user.age >= 18 %}
     <p>Adult user ({{ user.age }} years old)</p>
     {% else %}
     <p>Minor user ({{ user.age }} years old)</p>
@@ -256,7 +257,6 @@ are HTML-safe by default with automatic escaping.
     <h2>Bob</h2>
 
     <span class="badge">Administrator</span>
-
     <p>Adult user (25 years old)</p>
 </div>
 ```
