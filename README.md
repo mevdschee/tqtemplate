@@ -1464,8 +1464,7 @@ TQTemplate includes a comprehensive set of builtin filters for common data trans
 Convert a string to lowercase.
 
 ```
-{{ "HELLO"|lower }}
-→ hello
+{{ "HELLO"|lower }} = hello
 ```
 
 #### `upper`
@@ -1473,8 +1472,7 @@ Convert a string to lowercase.
 Convert a string to uppercase.
 
 ```
-{{ "hello"|upper }}
-→ HELLO
+{{ "hello"|upper }} = HELLO
 ```
 
 #### `capitalize`
@@ -1482,8 +1480,7 @@ Convert a string to uppercase.
 Capitalize the first character of a string.
 
 ```
-{{ "hello world"|capitalize }}
-→ Hello world
+{{ "hello world"|capitalize }} = Hello world
 ```
 
 #### `title`
@@ -1491,8 +1488,7 @@ Capitalize the first character of a string.
 Convert a string to title case (capitalize first letter of each word).
 
 ```
-{{ "hello world"|title }}
-→ Hello World
+{{ "hello world"|title }} = Hello World
 ```
 
 #### `trim`
@@ -1500,8 +1496,7 @@ Convert a string to title case (capitalize first letter of each word).
 Remove leading and trailing whitespace.
 
 ```
-{{ "  hello  "|trim }}
-→ hello
+{{ "  hello  "|trim }} = hello
 ```
 
 #### `truncate(length, end)`
@@ -1511,14 +1506,9 @@ Truncate a string to a maximum length without breaking words. Default length is 
 The filter will attempt to break at word boundaries (spaces, tabs, newlines) to avoid cutting words in half.
 
 ```
-{{ "Hello World"|truncate(10) }}
-→ Hello...
-
-{{ "Hello World"|truncate(10, ">>") }}
-→ Hello>>
-
-{{ "Supercalifragilistic"|truncate(10) }}
-→ Superca...
+{{ "Hello World"|truncate(10) }} = Hello...
+{{ "Hello World"|truncate(10, ">>") }} = Hello>>
+{{ "Supercalifragilistic"|truncate(10) }} = Superca...
 ```
 
 #### `replace(old, new, count)`
@@ -1526,11 +1516,8 @@ The filter will attempt to break at word boundaries (spaces, tabs, newlines) to 
 Replace occurrences of a substring. If count is omitted, replaces all occurrences.
 
 ```
-{{ "Hello World"|replace("Hello", "Goodbye") }}
-→ Goodbye World
-
-{{ "aaaaargh"|replace("a", "d'oh, ", 2) }}
-→ d'oh, d'oh, aaargh
+{{ "Hello World"|replace("Hello", "Goodbye") }} = Goodbye World
+{{ "aaaaargh"|replace("a", "d'oh, ", 2) }} = d'oh, d'oh, aaargh
 ```
 
 #### `split(separator)`
@@ -1538,11 +1525,8 @@ Replace occurrences of a substring. If count is omitted, replaces all occurrence
 Split a string into a slice. Empty separator splits into characters.
 
 ```
-{{ "1,2,3"|split(",")|join("|") }}
-→ 1|2|3
-
-{{ "123"|split|join("|") }}
-→ 1|2|3
+{{ "1,2,3"|split(",")|join("|") }} = 1|2|3
+{{ "123"|split|join("|") }} = 1|2|3
 ```
 
 #### `urlencode`
@@ -1550,11 +1534,8 @@ Split a string into a slice. Empty separator splits into characters.
 Encode a string for use in URLs.
 
 ```
-{{ "hello world"|urlencode }}
-→ hello+world
-
-{{ "hello&world=test"|urlencode }}
-→ hello%26world%3Dtest
+{{ "hello world"|urlencode }} = hello+world
+{{ "hello&world=test"|urlencode }} = hello%26world%3Dtest
 ```
 
 ### Numeric Filters
@@ -1564,11 +1545,8 @@ Encode a string for use in URLs.
 Return the absolute value of a number.
 
 ```
-{{ -42|abs }}
-→ 42
-
-{{ 3.14|abs }}
-→ 3.14
+{{ -42|abs }} = 42
+{{ 3.14|abs }} = 3.14
 ```
 
 #### `round(precision, method)`
@@ -1586,14 +1564,9 @@ Available methods:
 - `tozero` - Round half towards zero
 
 ```
-{{ 42.55|round }}
-→ 43
-
-{{ 42.55|round(1, "floor") }}
-→ 42.5
-
-{{ 2.5|round(0, "even") }}
-→ 2
+{{ 42.55|round }} = 43
+{{ 42.55|round(1, "floor") }} = 42.5
+{{ 2.5|round(0, "even") }} = 2
 ```
 
 #### `sprintf(format)`
@@ -1601,11 +1574,8 @@ Available methods:
 Apply sprintf-style formatting to a value.
 
 ```
-{{ 3.14159|sprintf("%.2f") }}
-→ 3.14
-
-{{ 42|sprintf("%05d") }}
-→ 00042
+{{ 3.14159|sprintf("%.2f") }} = 3.14
+{{ 42|sprintf("%05d") }} = 00042
 ```
 
 #### `filesizeformat(binary)`
@@ -1613,14 +1583,9 @@ Apply sprintf-style formatting to a value.
 Format a number as a human-readable file size. Use binary=true for binary prefixes (KiB, MiB).
 
 ```
-{{ 13000|filesizeformat }}
-→ 13.0 kB
-
-{{ 1024|filesizeformat(true) }}
-→ 1.0 KiB
-
-{{ 1500000|filesizeformat }}
-→ 1.5 MB
+{{ 13000|filesizeformat }} = 13.0 kB
+{{ 1024|filesizeformat(true) }} = 1.0 KiB
+{{ 1500000|filesizeformat }} = 1.5 MB
 ```
 
 ### Array/Collection Filters
@@ -1630,11 +1595,8 @@ Format a number as a human-readable file size. Use binary=true for binary prefix
 Return the number of items in a collection.
 
 ```
-{{ [1, 2, 3]|length }}
-→ 3
-
-{{ "hello"|length }}
-→ 5
+{{ [1, 2, 3]|length }} = 3
+{{ "hello"|length }} = 5
 ```
 
 #### `first(n)`
@@ -1642,11 +1604,8 @@ Return the number of items in a collection.
 Return the first item or first n items of a slice.
 
 ```
-{{ [1, 2, 3, 4]|first }}
-→ 1
-
-{{ [1, 2, 3, 4]|first(2) }}
-→ [1, 2]
+{{ [1, 2, 3, 4]|first }} = 1
+{{ [1, 2, 3, 4]|first(2) }} = [1, 2]
 ```
 
 #### `last(n)`
@@ -1654,11 +1613,8 @@ Return the first item or first n items of a slice.
 Return the last item or last n items of a slice.
 
 ```
-{{ [1, 2, 3, 4]|last }}
-→ 4
-
-{{ [1, 2, 3, 4]|last(2) }}
-→ [3, 4]
+{{ [1, 2, 3, 4]|last }} = 4
+{{ [1, 2, 3, 4]|last(2) }} = [3, 4]
 ```
 
 #### `join(separator, attribute)`
@@ -1666,14 +1622,9 @@ Return the last item or last n items of a slice.
 Concatenate items in a slice with a separator. Can optionally join by attribute.
 
 ```
-{{ [1, 2, 3]|join("|") }}
-→ 1|2|3
-
-{{ [1, 2, 3]|join }}
-→ 123
-
-{{ users|join(", ", "username") }}
-→ alice, bob, charlie
+{{ [1, 2, 3]|join("|") }} = 1|2|3
+{{ [1, 2, 3]|join }} = 123
+{{ users|join(", ", "username") }} = alice, bob, charlie
 ```
 
 #### `reverse`
@@ -1681,11 +1632,8 @@ Concatenate items in a slice with a separator. Can optionally join by attribute.
 Reverse a slice or string.
 
 ```
-{{ [1, 2, 3]|reverse }}
-→ [3, 2, 1]
-
-{{ "hello"|reverse }}
-→ olleh
+{{ [1, 2, 3]|reverse }} = [3, 2, 1]
+{{ "hello"|reverse }} = olleh
 ```
 
 #### `sum(attribute)`
@@ -1693,11 +1641,8 @@ Reverse a slice or string.
 Return the sum of numbers in a slice. Can optionally sum by attribute.
 
 ```
-{{ [1, 2, 3]|sum }}
-→ 6
-
-{{ items|sum("price") }}
-→ 150.50
+{{ [1, 2, 3]|sum }} = 6
+{{ items|sum("price") }} = 150.50
 ```
 
 ### Utility Filters
@@ -1707,14 +1652,9 @@ Return the sum of numbers in a slice. Can optionally sum by attribute.
 Return a default value if the input is nil or (with boolean=true) falsy.
 
 ```
-{{ missing_var|default("N/A") }}
-→ N/A
-
-{{ ""|default("empty", true) }}
-→ empty
-
-{{ 0|default("zero", true) }}
-→ zero
+{{ missing_var|default("N/A") }} = N/A
+{{ ""|default("empty", true) }} = empty
+{{ 0|default("zero", true) }} = zero
 ```
 
 #### `attr(name)`
@@ -1722,11 +1662,8 @@ Return a default value if the input is nil or (with boolean=true) falsy.
 Get an attribute of an object by name.
 
 ```
-{{ user|attr("email") }}
-→ user@example.com
-
-{{ data|attr("nested")|attr("value") }}
-→ 42
+{{ user|attr("email") }} = user@example.com
+{{ data|attr("nested")|attr("value") }} = 42
 ```
 
 #### `debug` / `d`
@@ -1734,8 +1671,7 @@ Get an attribute of an object by name.
 Pretty print a value for debugging (outputs JSON).
 
 ```
-{{ user|debug }}
-→ {
+{{ user|debug }} = {
   "name": "Alice",
   "email": "alice@example.com"
 }
@@ -1746,8 +1682,7 @@ Pretty print a value for debugging (outputs JSON).
 Mark a value as safe HTML that should not be escaped.
 
 ```
-{{ "<strong>Bold</strong>"|raw }}
-→ <strong>Bold</strong>
+{{ "<strong>Bold</strong>"|raw }} = <strong>Bold</strong>
 ```
 
 ### Filter Chaining
@@ -1755,11 +1690,8 @@ Mark a value as safe HTML that should not be escaped.
 Filters can be chained together:
 
 ```
-{{ "  hello world  "|trim|upper|replace("WORLD", "FRIEND") }}
-→ HELLO FRIEND
-
-{{ items|first(3)|reverse|join(", ") }}
-→ 3, 2, 1
+{{ "  hello world  "|trim|upper|replace("WORLD", "FRIEND") }} = HELLO FRIEND
+{{ items|first(3)|reverse|join(", ") }} = 3, 2, 1
 ```
 
 ---
