@@ -1785,6 +1785,160 @@ $html = $template->render(
 
 ---
 
+## Builtin Tests
+
+TQTemplate supports Jinja2-style tests using the `is` keyword. Tests are used to check properties of values, particularly useful in conditional expressions.
+
+### Syntax
+
+Tests are used with the `is` keyword:
+
+```
+{% if variable is testname %}
+{% if variable is not testname %}
+{% if variable is testname(arg) %}
+```
+
+### Available Tests
+
+#### `defined`
+
+Check if a variable is defined (not nil).
+
+```
+{% if user is defined %}
+    User exists: {{ user }}
+{% else %}
+    No user found
+{% endif %}
+```
+
+#### `undefined`
+
+Check if a variable is undefined (nil). Opposite of `defined`.
+
+```
+{% if missing is undefined %}
+    Variable is not defined
+{% endif %}
+```
+
+#### `null` / `none`
+
+Check if a value is nil.
+
+```
+{% if value is null %}
+    Value is null
+{% endif %}
+```
+
+#### `even`
+
+Check if a number is even.
+
+```
+{% if count is even %}
+    Count is even: {{ count }}
+{% endif %}
+```
+
+#### `odd`
+
+Check if a number is odd.
+
+```
+{% if count is odd %}
+    Count is odd: {{ count }}
+{% endif %}
+```
+
+#### `divisibleby(n)`
+
+Check if a number is divisible by n.
+
+```
+{% if total is divisibleby(3) %}
+    Total is divisible by 3
+{% endif %}
+```
+
+#### `number`
+
+Check if a value is a number (int, float, or numeric string).
+
+```
+{% if value is number %}
+    {{ value }} is a number
+{% endif %}
+```
+
+#### `string`
+
+Check if a value is a string.
+
+```
+{% if name is string %}
+    {{ name }} is a string
+{% endif %}
+```
+
+#### `iterable`
+
+Check if a value can be iterated over (array, map, or string).
+
+```
+{% if items is iterable %}
+    {% for item in items %}
+        {{ item }}
+    {% endfor %}
+{% endif %}
+```
+
+#### `lower`
+
+Check if a string is all lowercase (contains at least one letter).
+
+```
+{% if text is lower %}
+    Text is lowercase
+{% endif %}
+```
+
+#### `upper`
+
+Check if a string is all uppercase (contains at least one letter).
+
+```
+{% if text is upper %}
+    Text is uppercase
+{% endif %}
+```
+
+### Test Negation
+
+Tests can be negated using `is not`:
+
+```
+{% if value is not null %}
+    Value exists
+{% endif %}
+
+{% if count is not even %}
+    Count is odd
+{% endif %}
+```
+
+### Tests in Variable Expressions
+
+Tests can also be used in variable expressions and will output `1` for true or empty string for false:
+
+```
+{{ num is even }}  {# outputs "1" if num is even, "" otherwise #}
+```
+
+---
+
 ## Notes
 
 - All output is **HTML-escaped by default** for security

@@ -216,19 +216,22 @@ func processIsTests(expr string) (string, string) {
 	testFilter := ""
 	if strings.Contains(right, "(") {
 		// Has arguments like "divisibleby(3)"
-		testFilter = "__istest__(" + right + ")"
+		parenIdx := strings.Index(right, "(")
+		testName := right[:parenIdx]
+		argsWithParens := right[parenIdx:] // includes parentheses and content
+		argsInner := strings.TrimSuffix(strings.TrimPrefix(argsWithParens, "("), ")")
+
+		if isNegated {
+			testFilter = "__isnot__(\"" + testName + "\", " + argsInner + ")"
+		} else {
+			testFilter = "__istest__(\"" + testName + "\", " + argsInner + ")"
+		}
 	} else {
 		// Simple test like "defined"
-		testFilter = "__istest__(\"" + right + "\")"
-	}
-
-	// Add negation if needed
-	if isNegated {
-		testFilter = "__isnot__(" + right + ")"
-		if strings.Contains(right, "(") {
-			testFilter = "__isnot__(" + right + ")"
-		} else {
+		if isNegated {
 			testFilter = "__isnot__(\"" + right + "\")"
+		} else {
+			testFilter = "__istest__(\"" + right + "\")"
 		}
 	}
 

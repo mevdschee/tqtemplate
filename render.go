@@ -91,6 +91,18 @@ func (t *Template) renderIfNode(node *TreeNode, data map[string]any, functions m
 
 	expr := NewExpression(actualExpr)
 	value, err := expr.Evaluate(data, t.resolvePath)
+
+	// Special handling for "defined" and "undefined" tests
+	// If we have an error and the test is for defined/undefined, handle it specially
+	if err != nil && (strings.Contains(testFilter, "__istest__(\"defined\")") ||
+		strings.Contains(testFilter, "__istest__(\"undefined\")") ||
+		strings.Contains(testFilter, "__isnot__(\"defined\")") ||
+		strings.Contains(testFilter, "__isnot__(\"undefined\")")) {
+		// For defined/undefined tests, treat error as undefined value (nil)
+		value = nil
+		err = nil
+	}
+
 	if err != nil {
 		return t.escapeValue("{% if " + expressionStr + "!!" + err.Error() + " %}"), nil
 	}
@@ -144,6 +156,18 @@ func (t *Template) renderElseIfNode(node *TreeNode, ifNodes []*TreeNode, data ma
 
 		expr := NewExpression(actualExpr)
 		value, err := expr.Evaluate(data, t.resolvePath)
+
+		// Special handling for "defined" and "undefined" tests
+		// If we have an error and the test is for defined/undefined, handle it specially
+		if err != nil && (strings.Contains(testFilter, "__istest__(\"defined\")") ||
+			strings.Contains(testFilter, "__istest__(\"undefined\")") ||
+			strings.Contains(testFilter, "__isnot__(\"defined\")") ||
+			strings.Contains(testFilter, "__isnot__(\"undefined\")")) {
+			// For defined/undefined tests, treat error as undefined value (nil)
+			value = nil
+			err = nil
+		}
+
 		if err != nil {
 			return t.escapeValue("{% elseif " + expressionStr + "!!" + err.Error() + " %}"), nil
 		}
