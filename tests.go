@@ -3,7 +3,6 @@ package tqtemplate
 import (
 	"reflect"
 	"strings"
-	"unicode"
 )
 
 // getBuiltinTests returns all builtin tests for the template engine
@@ -15,10 +14,7 @@ func getBuiltinTests() map[string]any {
 		"even":        testEven,
 		"odd":         testOdd,
 		"iterable":    testIterable,
-		"lower":       testLower,
-		"upper":       testUpper,
-		"null":        testNull,
-		"none":        testNull, // alias for null
+	"null":        testNull,
 		"number":      testNumber,
 		"string":      testString,
 		"__istest__":  filterIsTest,
@@ -121,56 +117,6 @@ func testIterable(value any) bool {
 		kind == reflect.Array ||
 		kind == reflect.Map ||
 		kind == reflect.String
-}
-
-// testLower returns true if the string is all lowercase
-func testLower(value any) bool {
-	str := toString(value)
-	if str == "" {
-		return false
-	}
-
-	for _, r := range str {
-		if unicode.IsUpper(r) {
-			return false
-		}
-	}
-
-	// Check if there's at least one letter
-	hasLetter := false
-	for _, r := range str {
-		if unicode.IsLetter(r) {
-			hasLetter = true
-			break
-		}
-	}
-
-	return hasLetter
-}
-
-// testUpper returns true if the string is all uppercase
-func testUpper(value any) bool {
-	str := toString(value)
-	if str == "" {
-		return false
-	}
-
-	for _, r := range str {
-		if unicode.IsLower(r) {
-			return false
-		}
-	}
-
-	// Check if there's at least one letter
-	hasLetter := false
-	for _, r := range str {
-		if unicode.IsLetter(r) {
-			hasLetter = true
-			break
-		}
-	}
-
-	return hasLetter
 }
 
 // testNull returns true if the value is nil
