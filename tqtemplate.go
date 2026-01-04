@@ -949,9 +949,13 @@ func (t *Template) applyFunctions(value any, parts []string, functions map[strin
 					unescaped = strings.ReplaceAll(unescaped, "\\\"", "\"")
 					unescaped = strings.ReplaceAll(unescaped, "\\\\", "\\")
 					arguments = append(arguments, unescaped)
-				} else if _, err := strconv.ParseFloat(argStr, 64); err == nil {
-					// Numeric literal
-					arguments = append(arguments, argStr)
+				} else if num, err := strconv.ParseFloat(argStr, 64); err == nil {
+					// Numeric literal - convert to appropriate numeric type
+					if strings.Contains(argStr, ".") {
+						arguments = append(arguments, num) // float64
+					} else {
+						arguments = append(arguments, int(num)) // int
+					}
 				} else {
 					// Path reference
 					val, err := t.resolvePath(argStr, data)

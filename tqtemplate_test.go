@@ -115,9 +115,27 @@ func TestRenderWithFunctionArgumentWithWhitespace(t *testing.T) {
 }
 
 func TestRenderWithEscapedSpecialCharacters(t *testing.T) {
-	// This test is quite complex with escaped characters, skipping for now
-	// The PHP version involves complex escaping patterns that are hard to replicate
-	t.Skip("Skipping complex escaping test - requires further investigation")
+	functions := map[string]any{
+		"dateFormat": func(dateStr string, format string) string {
+			// Convert PHP date format to Go time format
+			// " M ()}}\",|:.j, Y" becomes " Jan ()}}\",|:.2, 2006"
+			goFormat := strings.ReplaceAll(format, "M", "Jan")
+			goFormat = strings.ReplaceAll(goFormat, "j", "2")
+			goFormat = strings.ReplaceAll(goFormat, "Y", "2006")
+
+			t, _ := time.Parse("January 2, 2006", dateStr)
+			return t.Format(goFormat)
+		},
+	}
+
+	// Template with escaped quotes and special characters in the filter argument
+	tmpl := "hello \"{{ name|dateFormat(\" M ()}}\\\",|:.j, Y\") }}\""
+	expected := "hello \" May ()}}&#34;,|:.13, 1980\""
+
+	result, _ := template.Render(tmpl, map[string]any{"name": "May 13, 1980"}, functions)
+	if result != expected {
+		t.Errorf("Expected '%s', got '%s'", expected, result)
+	}
 }
 
 func TestRenderForLoopWithValues(t *testing.T) {
