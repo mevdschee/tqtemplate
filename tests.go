@@ -14,7 +14,7 @@ func getBuiltinTests() map[string]any {
 		"even":        testEven,
 		"odd":         testOdd,
 		"iterable":    testIterable,
-	"null":        testNull,
+		"null":        testNull,
 		"number":      testNumber,
 		"string":      testString,
 		"__istest__":  filterIsTest,
