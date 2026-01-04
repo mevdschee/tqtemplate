@@ -645,9 +645,7 @@ are HTML-safe by default with automatic escaping.
         <th>Status</th>
     </tr>
     {% for order in orders %}
-    <tr
-        class="{% if order.status == 'cancelled' %}cancelled{% elseif order.status == 'delivered' %}success{% endif %}"
-    >
+    <tr class="{% if order.status == 'cancelled' %}cancelled{% elseif order.status == 'delivered' %}success{% endif %}">
         <td>#{{ order.id }}</td>
         <td>${{ order.total }}</td>
         <td>
@@ -908,16 +906,12 @@ are HTML-safe by default with automatic escaping.
                     dashboard.stats.total_users }}% active</small>
             </div>
 
-            <div
-                class="stat-card {% if dashboard.stats.total_revenue > 40000 %}success{% endif %}"
-            >
+            <div class="stat-card {% if dashboard.stats.total_revenue > 40000 %}success{% endif %}">
                 <h3>Revenue</h3>
                 <p class="number">${{ dashboard.stats.total_revenue }}</p>
             </div>
 
-            <div
-                class="stat-card {% if dashboard.stats.pending_orders > 20 %}warning{% endif %}"
-            >
+            <div class="stat-card {% if dashboard.stats.pending_orders > 20 %}warning{% endif %}">
                 <h3>Pending Orders</h3>
                 <p class="number">{{ dashboard.stats.pending_orders }}</p>
             </div>
