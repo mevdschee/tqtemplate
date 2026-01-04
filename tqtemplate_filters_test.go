@@ -48,7 +48,7 @@ func TestFilterTrim(t *testing.T) {
 }
 
 func TestFilterTruncate(t *testing.T) {
-	result, _ := template.Render("{{ text|truncate(8) }}", map[string]any{"text": "Hello World"}, nil)
+	result, _ := template.Render("{{ text|truncate(10) }}", map[string]any{"text": "Hello World"}, nil)
 	expected := "Hello..."
 	if result != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, result)
@@ -57,7 +57,7 @@ func TestFilterTruncate(t *testing.T) {
 
 func TestFilterTruncateCustomEnd(t *testing.T) {
 	result, _ := template.Render(`{{ text|truncate(10, ">>")|raw }}`, map[string]any{"text": "Hello World"}, nil)
-	expected := "Hello Wo>>"
+	expected := "Hello>>"
 	if result != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, result)
 	}
@@ -66,6 +66,30 @@ func TestFilterTruncateCustomEnd(t *testing.T) {
 func TestFilterTruncateNoTruncation(t *testing.T) {
 	result, _ := template.Render("{{ text|truncate(20) }}", map[string]any{"text": "Hello"}, nil)
 	expected := "Hello"
+	if result != expected {
+		t.Errorf("Expected '%s', got '%s'", expected, result)
+	}
+}
+
+func TestFilterTruncateLongWord(t *testing.T) {
+	result, _ := template.Render("{{ text|truncate(10) }}", map[string]any{"text": "Supercalifragilistic"}, nil)
+	expected := "Superca..."
+	if result != expected {
+		t.Errorf("Expected '%s', got '%s'", expected, result)
+	}
+}
+
+func TestFilterTruncateMultipleWords(t *testing.T) {
+	result, _ := template.Render("{{ text|truncate(20) }}", map[string]any{"text": "The quick brown fox jumps"}, nil)
+	expected := "The quick brown..."
+	if result != expected {
+		t.Errorf("Expected '%s', got '%s'", expected, result)
+	}
+}
+
+func TestFilterTruncateWithTrailingSpace(t *testing.T) {
+	result, _ := template.Render("{{ text|truncate(15) }}", map[string]any{"text": "Hello world and more"}, nil)
+	expected := "Hello world..."
 	if result != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, result)
 	}

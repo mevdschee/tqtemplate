@@ -1506,14 +1506,19 @@ Remove leading and trailing whitespace.
 
 #### `truncate(length, end)`
 
-Truncate a string to a maximum length. Default length is 255, default end is "...".
+Truncate a string to a maximum length without breaking words. Default length is 255, default end is "...".
+
+The filter will attempt to break at word boundaries (spaces, tabs, newlines) to avoid cutting words in half.
 
 ```
-{{ "Hello World"|truncate(8) }}
+{{ "Hello World"|truncate(10) }}
 → Hello...
 
-{{ "Hello World"|truncate(8, ">>") }}
-→ Hello W>>
+{{ "Hello World"|truncate(10, ">>") }}
+→ Hello>>
+
+{{ "Supercalifragilistic"|truncate(10) }}
+→ Superca...
 ```
 
 #### `replace(old, new, count)`

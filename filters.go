@@ -478,7 +478,7 @@ func filterTrim(value any) string {
 	return strings.TrimSpace(toString(value))
 }
 
-// filterTruncate truncates a string to a maximum length
+// filterTruncate truncates a string to a maximum length without breaking words
 func filterTruncate(value any, args ...any) string {
 	s := toString(value)
 
@@ -498,8 +498,23 @@ func filterTruncate(value any, args ...any) string {
 		return s
 	}
 
-	truncated := s[:length-len(end)]
-	return truncated + end
+	// Calculate space available for content (excluding the end string)
+	maxContentLength := length - len(end)
+	if maxContentLength <= 0 {
+		return end
+	}
+
+	// Don't break in the middle of words - find the last space before the cutoff
+	truncated := s[:maxContentLength]
+	lastSpace := strings.LastIndexAny(truncated, " \t\n\r")
+
+	// If we found a space and it's not at the very beginning, use it
+	if lastSpace > 0 {
+		truncated = s[:lastSpace]
+	}
+	// Otherwise, keep the truncated string as is (single long word)
+
+	return strings.TrimRight(truncated, " \t\n\r") + end
 }
 
 // filterUpper converts a string to uppercase
