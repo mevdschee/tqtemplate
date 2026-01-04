@@ -2,10 +2,10 @@
 
 ## Overview
 
-TQTemplate engine provides a simple yet powerful templating system with variable
-interpolation, control structures, filters, and expression evaluation. Designed 
-specifically for HTML output, all variable interpolation is automatically escaped 
-for security.
+TQTemplate engine provides a simple yet powerful Jinja-like templating system with 
+variable interpolation, control structures, filters, and expression evaluation.
+Designed specifically for HTML output, all variable interpolation is automatically
+escaped for security.
 
 ## BNF Syntax
 
