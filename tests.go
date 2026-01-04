@@ -1,0 +1,236 @@
+package tqtemplate
+
+import (
+	"reflect"
+	"strings"
+	"unicode"
+)
+
+// getBuiltinTests returns all builtin tests for the template engine
+func getBuiltinTests() map[string]any {
+	return map[string]any{
+		"defined":     testDefined,
+		"undefined":   testUndefined,
+		"divisibleby": testDivisibleBy,
+		"even":        testEven,
+		"odd":         testOdd,
+		"iterable":    testIterable,
+		"lower":       testLower,
+		"upper":       testUpper,
+		"null":        testNull,
+		"none":        testNull, // alias for null
+		"number":      testNumber,
+		"string":      testString,
+		"__istest__":  filterIsTest,
+		"__isnot__":   filterIsNot,
+	}
+}
+
+// filterIsTest applies a test function to a value
+func filterIsTest(value any, args ...any) bool {
+	if len(args) == 0 {
+		return false
+	}
+
+	// First arg is the test name
+	testName := toString(args[0])
+
+	// Get the test function
+	tests := getBuiltinTests()
+	testFn, exists := tests[testName]
+	if !exists {
+		return false
+	}
+
+	// Call the test with remaining args
+	remaining := args[1:]
+
+	// Type switch on test function signature
+	switch fn := testFn.(type) {
+	case func(any) bool:
+		return fn(value)
+	case func(any, ...any) bool:
+		return fn(value, remaining...)
+	default:
+		return false
+	}
+}
+
+// filterIsNot is the negation of filterIsTest
+func filterIsNot(value any, args ...any) bool {
+	return !filterIsTest(value, args...)
+}
+
+// testDefined returns true if the value is not nil
+func testDefined(value any) bool {
+	return value != nil
+}
+
+// testUndefined returns true if the value is nil
+func testUndefined(value any) bool {
+	return value == nil
+}
+
+// testDivisibleBy checks if a number is divisible by another number
+func testDivisibleBy(value any, args ...any) bool {
+	if len(args) == 0 {
+		return false
+	}
+
+	num, ok := toNumber(value)
+	if !ok {
+		return false
+	}
+
+	divisor, ok := toNumber(args[0])
+	if !ok || divisor == 0 {
+		return false
+	}
+
+	return int(num)%int(divisor) == 0
+}
+
+// testEven returns true if the value is an even number
+func testEven(value any) bool {
+	num, ok := toNumber(value)
+	if !ok {
+		return false
+	}
+	return int(num)%2 == 0
+}
+
+// testOdd returns true if the value is an odd number
+func testOdd(value any) bool {
+	num, ok := toNumber(value)
+	if !ok {
+		return false
+	}
+	return int(num)%2 != 0
+}
+
+// testIterable checks if it's possible to iterate over an object
+func testIterable(value any) bool {
+	if value == nil {
+		return false
+	}
+
+	v := reflect.ValueOf(value)
+	kind := v.Kind()
+
+	return kind == reflect.Slice ||
+		kind == reflect.Array ||
+		kind == reflect.Map ||
+		kind == reflect.String
+}
+
+// testLower returns true if the string is all lowercase
+func testLower(value any) bool {
+	str := toString(value)
+	if str == "" {
+		return false
+	}
+
+	for _, r := range str {
+		if unicode.IsUpper(r) {
+			return false
+		}
+	}
+
+	// Check if there's at least one letter
+	hasLetter := false
+	for _, r := range str {
+		if unicode.IsLetter(r) {
+			hasLetter = true
+			break
+		}
+	}
+
+	return hasLetter
+}
+
+// testUpper returns true if the string is all uppercase
+func testUpper(value any) bool {
+	str := toString(value)
+	if str == "" {
+		return false
+	}
+
+	for _, r := range str {
+		if unicode.IsLower(r) {
+			return false
+		}
+	}
+
+	// Check if there's at least one letter
+	hasLetter := false
+	for _, r := range str {
+		if unicode.IsLetter(r) {
+			hasLetter = true
+			break
+		}
+	}
+
+	return hasLetter
+}
+
+// testNull returns true if the value is nil
+func testNull(value any) bool {
+	return value == nil
+}
+
+// testNumber returns true if the value is a number
+func testNumber(value any) bool {
+	_, ok := toNumber(value)
+	return ok
+}
+
+// testString returns true if the value is a string
+func testString(value any) bool {
+	_, ok := value.(string)
+	return ok
+}
+
+// processIsTests preprocesses an expression to convert "is test" syntax to filter calls
+// Returns the modified expression and extracted test filter (if any)
+func processIsTests(expr string) (string, string) {
+	// Pattern: value is testname or value is testname(args) or value is not testname
+	// This converts "variable is defined" to: variable with filter __istest__("defined")
+
+	// Look for " is " pattern
+	isIdx := strings.Index(expr, " is ")
+	if isIdx == -1 {
+		return expr, ""
+	}
+
+	left := strings.TrimSpace(expr[:isIdx])
+	right := strings.TrimSpace(expr[isIdx+4:])
+
+	// Check for negation: "is not testname"
+	isNegated := false
+	if strings.HasPrefix(right, "not ") {
+		isNegated = true
+		right = strings.TrimSpace(right[4:])
+	}
+
+	// Extract test name and arguments
+	testFilter := ""
+	if strings.Contains(right, "(") {
+		// Has arguments like "divisibleby(3)"
+		testFilter = "__istest__(" + right + ")"
+	} else {
+		// Simple test like "defined"
+		testFilter = "__istest__(\"" + right + "\")"
+	}
+
+	// Add negation if needed
+	if isNegated {
+		testFilter = "__isnot__(" + right + ")"
+		if strings.Contains(right, "(") {
+			testFilter = "__isnot__(" + right + ")"
+		} else {
+			testFilter = "__isnot__(\"" + right + "\")"
+		}
+	}
+
+	return left, testFilter
+}
