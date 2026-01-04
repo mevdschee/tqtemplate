@@ -400,3 +400,171 @@ func TestBlockInheritanceNoIndentationPreservation(t *testing.T) {
 		t.Errorf("Expected %q, got %q", expected, result)
 	}
 }
+
+// Test basic include functionality
+func TestIncludeBasic(t *testing.T) {
+	templates := map[string]string{
+		"header.html": "<header><h1>Site Header</h1></header>",
+		"main.html":   "<div>{% include 'header.html' %}\n<main>Main content</main>\n</div>",
+	}
+
+	loader := func(name string) (string, error) {
+		if tmpl, exists := templates[name]; exists {
+			return tmpl, nil
+		}
+		return "", fmt.Errorf("template not found: %s", name)
+	}
+
+	template := NewTemplateWithLoader("html", loader)
+	result, err := template.Render(templates["main.html"], map[string]any{}, nil)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	expected := "<div><header><h1>Site Header</h1></header>\n<main>Main content</main>\n</div>"
+	if result != expected {
+		t.Errorf("Expected %q, got %q", expected, result)
+	}
+}
+
+// Test include with variables
+func TestIncludeWithVariables(t *testing.T) {
+	templates := map[string]string{
+		"greeting.html": "<p>Hello, {{ name }}!</p>",
+		"main.html":     "<div>{% include 'greeting.html' %}</div>",
+	}
+
+	loader := func(name string) (string, error) {
+		if tmpl, exists := templates[name]; exists {
+			return tmpl, nil
+		}
+		return "", fmt.Errorf("template not found: %s", name)
+	}
+
+	data := map[string]any{
+		"name": "Alice",
+	}
+
+	template := NewTemplateWithLoader("html", loader)
+	result, err := template.Render(templates["main.html"], data, nil)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	expected := "<div><p>Hello, Alice!</p></div>"
+	if result != expected {
+		t.Errorf("Expected %q, got %q", expected, result)
+	}
+}
+
+// Test multiple includes
+func TestMultipleIncludes(t *testing.T) {
+	templates := map[string]string{
+		"header.html": "<header>Header</header>\n",
+		"footer.html": "<footer>Footer</footer>\n",
+		"main.html":   "{% include 'header.html' %}\n<main>Content</main>\n{% include 'footer.html' %}\n",
+	}
+
+	loader := func(name string) (string, error) {
+		if tmpl, exists := templates[name]; exists {
+			return tmpl, nil
+		}
+		return "", fmt.Errorf("template not found: %s", name)
+	}
+
+	template := NewTemplateWithLoader("html", loader)
+	result, err := template.Render(templates["main.html"], map[string]any{}, nil)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	expected := "<header>Header</header>\n<main>Content</main>\n<footer>Footer</footer>\n"
+	if result != expected {
+		t.Errorf("Expected %q, got %q", expected, result)
+	}
+}
+
+// Test include with control structures
+func TestIncludeWithControlStructures(t *testing.T) {
+	templates := map[string]string{
+		"item.html": "{% for item in items %}<li>{{ item }}</li>\n{% endfor %}",
+		"main.html": "<ul>\n{% include 'item.html' %}</ul>",
+	}
+
+	loader := func(name string) (string, error) {
+		if tmpl, exists := templates[name]; exists {
+			return tmpl, nil
+		}
+		return "", fmt.Errorf("template not found: %s", name)
+	}
+
+	data := map[string]any{
+		"items": []any{"Apple", "Banana", "Cherry"},
+	}
+
+	template := NewTemplateWithLoader("html", loader)
+	result, err := template.Render(templates["main.html"], data, nil)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	expected := "<ul>\n<li>Apple</li>\n<li>Banana</li>\n<li>Cherry</li>\n</ul>"
+	if result != expected {
+		t.Errorf("Expected %q, got %q", expected, result)
+	}
+}
+
+// Test include without loader
+func TestIncludeWithoutLoader(t *testing.T) {
+	template := NewTemplate("html")
+	_, err := template.Render("{% include 'header.html' %}", map[string]any{}, nil)
+	if err == nil {
+		t.Error("Expected error when loader not configured")
+	}
+	if !strings.Contains(err.Error(), "template loader not configured") {
+		t.Errorf("Expected 'template loader not configured' error, got: %v", err)
+	}
+}
+
+// Test include template not found
+func TestIncludeTemplateNotFound(t *testing.T) {
+	loader := func(name string) (string, error) {
+		return "", fmt.Errorf("template not found: %s", name)
+	}
+
+	template := NewTemplateWithLoader("html", loader)
+	_, err := template.Render("{% include 'missing.html' %}", map[string]any{}, nil)
+	if err == nil {
+		t.Error("Expected error when template not found")
+	}
+	if !strings.Contains(err.Error(), "failed to load included template") {
+		t.Errorf("Expected 'failed to load included template' error, got: %v", err)
+	}
+}
+
+// Test nested includes
+func TestNestedIncludes(t *testing.T) {
+	templates := map[string]string{
+		"deep.html":   "<span>Deep content</span>",
+		"middle.html": "<div>{% include 'deep.html' %}</div>",
+		"top.html":    "<section>{% include 'middle.html' %}</section>",
+	}
+
+	loader := func(name string) (string, error) {
+		if tmpl, exists := templates[name]; exists {
+			return tmpl, nil
+		}
+		return "", fmt.Errorf("template not found: %s", name)
+	}
+
+	template := NewTemplateWithLoader("html", loader)
+	result, err := template.Render(templates["top.html"], map[string]any{}, nil)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	expected := "<section><div><span>Deep content</span></div></section>"
+	if result != expected {
+		t.Errorf("Expected %q, got %q", expected, result)
+	}
+}

@@ -17,9 +17,19 @@ Templates are HTML-safe by default with automatic escaping.
 
 <variable>        ::= "{{" <ws>? <expression> <filter-chain>? <ws>? "}}"
 
-<control>         ::= <if-block> | <for-block>
+<control>         ::= <if-block> | <for-block> | <block> | <extends> | <include>
 
 <comment>         ::= "{#" <any-text> "#}"
+
+<extends>         ::= "{%" <ws>? "extends" <ws> <string> <ws>? "%}"
+
+<include>         ::= "{%" <ws>? "include" <ws> <string> <ws>? "%}"
+
+<block>           ::= <block-tag> <content>* <endblock-tag>
+
+<block-tag>       ::= "{%" <ws>? "block" <ws> <identifier> <ws>? "%}"
+
+<endblock-tag>    ::= "{%" <ws>? "endblock" <ws>? "%}"
 
 <if-block>        ::= <if-tag> <content>* <elseif-tag>* <else-tag>? <endif-tag>
 
@@ -117,6 +127,8 @@ Templates are HTML-safe by default with automatic escaping.
 
 - **Variable interpolation** with `{{ }}` syntax
 - **Control structures** with `{% %}` syntax (if/elseif/else, for loops)
+- **Template inheritance** with `{% extends %}` and `{% block %}`
+- **Template inclusion** with `{% include %}`
 - **Comments** with `{# #}` syntax
 - **Expression evaluation** with full operator support
 - **Filters** with pipe syntax `|`
@@ -633,19 +645,15 @@ Templates are HTML-safe by default with automatic escaping.
         <th>Status</th>
     </tr>
     {% for order in orders %}
-    <tr class="{% if order.status == 'cancelled' %}cancelled{% elseif order.status == 'delivered' %}success{% endif %}">
+    <tr
+        class="{% if order.status == 'cancelled' %}cancelled{% elseif order.status == 'delivered' %}success{% endif %}"
+    >
         <td>#{{ order.id }}</td>
         <td>${{ order.total }}</td>
         <td>
-            {% if order.status == "shipped" %}
-            🚚 Shipped
-            {% elseif order.status == "pending" %}
-            ⏳ Pending
-            {% elseif order.status == "delivered" %}
-            ✓ Delivered
-            {% else %}
-            ✗ Cancelled
-            {% endif %}
+            {% if order.status == "shipped" %} 🚚 Shipped {% elseif order.status
+            == "pending" %} ⏳ Pending {% elseif order.status == "delivered" %}
+            ✓ Delivered {% else %} ✗ Cancelled {% endif %}
         </td>
     </tr>
     {% endfor %}
@@ -712,9 +720,7 @@ Templates are HTML-safe by default with automatic escaping.
     {# This is a comment and won't appear in output #}
     <h2>{{ username }}</h2>
 
-    {# Multi-line comment 
-    These can span multiple lines and 
-    won't be rendered #}
+    {# Multi-line comment These can span multiple lines and won't be rendered #}
     <p>Email: {{ email }}</p>
     {# TODO: Add phone number field #}
 </div>
@@ -791,7 +797,8 @@ Templates are HTML-safe by default with automatic escaping.
             <article class="post">
                 <h2>{{ post.title }}</h2>
                 <div class="meta">
-                    By {{ post.author }} on {{ post.date }} {% if post.views > 1000 %}
+                    By {{ post.author }} on {{ post.date }} {% if post.views >
+                    1000 %}
                     <span class="popular">🔥 Popular</span>
                     {% endif %}
                 </div>
@@ -901,12 +908,16 @@ Templates are HTML-safe by default with automatic escaping.
                     dashboard.stats.total_users }}% active</small>
             </div>
 
-            <div class="stat-card {% if dashboard.stats.total_revenue > 40000 %}success{% endif %}">
+            <div
+                class="stat-card {% if dashboard.stats.total_revenue > 40000 %}success{% endif %}"
+            >
                 <h3>Revenue</h3>
                 <p class="number">${{ dashboard.stats.total_revenue }}</p>
             </div>
 
-            <div class="stat-card {% if dashboard.stats.pending_orders > 20 %}warning{% endif %}">
+            <div
+                class="stat-card {% if dashboard.stats.pending_orders > 20 %}warning{% endif %}"
+            >
                 <h3>Pending Orders</h3>
                 <p class="number">{{ dashboard.stats.pending_orders }}</p>
             </div>
@@ -984,6 +995,461 @@ Templates are HTML-safe by default with automatic escaping.
 
 ---
 
+### Example 16: Template Inheritance with Extends and Blocks
+
+Template inheritance allows you to build a base "skeleton" template that
+contains common elements of your site and defines **blocks** that child
+templates can override.
+
+**Base Template (base.html):**
+
+```html
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{% block title %}Default Title{% endblock %}</title>
+        {% block head %}{% endblock %}
+    </head>
+    <body>
+        <header>
+            <h1>My Website</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/about">About</a>
+            </nav>
+        </header>
+
+        <main>
+            {% block content %}
+            <p>Default content</p>
+            {% endblock %}
+        </main>
+
+        <footer>
+            <p>&copy; 2026 My Website</p>
+        </footer>
+    </body>
+</html>
+```
+
+**Child Template:**
+
+```html
+{% extends 'base.html' %} {% block title %}Welcome Page{% endblock %} {% block
+head %}
+<style>
+    .highlight {
+        color: blue;
+    }
+</style>
+{% endblock %} {% block content %}
+<h2>Welcome to Our Site!</h2>
+<p class="highlight">This content replaces the default content block.</p>
+{% endblock %}
+```
+
+**Data (JSON):**
+
+```json
+{}
+```
+
+**Output:**
+
+```html
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Welcome Page</title>
+        <style>
+            .highlight {
+                color: blue;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>My Website</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/about">About</a>
+            </nav>
+        </header>
+
+        <main>
+            <h2>Welcome to Our Site!</h2>
+            <p class="highlight">
+                This content replaces the default content block.
+            </p>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 My Website</p>
+        </footer>
+    </body>
+</html>
+```
+
+**Notes:**
+
+- The `{% extends %}` directive must be the first non-whitespace element in the
+  child template
+- Child blocks completely replace parent block content
+- Blocks not overridden in the child will use the parent's default content
+- Template inheritance requires a `TemplateLoader` function to load parent
+  templates
+
+---
+
+### Example 17: Nested Blocks
+
+Blocks can be nested within other blocks, and child templates can override
+nested blocks.
+
+**Base Template (layout.html):**
+
+```html
+<div class="page">
+    {% block outer %}
+    <div class="container">
+        {% block inner %}
+        <p>Default inner content</p>
+        {% endblock %}
+    </div>
+    {% endblock %}
+</div>
+```
+
+**Child Template:**
+
+```html
+{% extends 'layout.html' %} {% block inner %}
+<h1>Custom Inner Content</h1>
+{% endblock %}
+```
+
+**Output:**
+
+```html
+<div class="page">
+    <div class="container">
+        <h1>Custom Inner Content</h1>
+    </div>
+</div>
+```
+
+**Notes:**
+
+- When only the inner block is overridden, the outer block structure from the
+  parent is preserved
+- Each block is independently overrideable
+
+---
+
+### Example 18: Multiple Block Overrides with Variables
+
+**Base Template (blog-layout.html):**
+
+```html
+<article>
+    <header>
+        <h1>{% block title %}Untitled{% endblock %}</h1>
+        <div class="meta">
+            {% block meta %}
+            <span>No metadata</span>
+            {% endblock %}
+        </div>
+    </header>
+    <div class="content">
+        {% block content %}No content{% endblock %}
+    </div>
+</article>
+```
+
+**Child Template:**
+
+```html
+{% extends 'blog-layout.html' %} {% block title %}{{ post.title }}{% endblock %}
+{% block meta %}
+<span class="author">By {{ post.author }}</span>
+<span class="date">{{ post.date }}</span>
+{% endblock %} {% block content %}
+<p>{{ post.body }}</p>
+<p>Tags: {{ post.tags }}</p>
+{% endblock %}
+```
+
+**Data (JSON):**
+
+```json
+{
+    "post": {
+        "title": "Introduction to Templates",
+        "author": "Jane Doe",
+        "date": "2026-01-04",
+        "body": "This is the post body with important information.",
+        "tags": "templates, documentation"
+    }
+}
+```
+
+**Output:**
+
+```html
+<article>
+    <header>
+        <h1>Introduction to Templates</h1>
+        <div class="meta">
+            <span class="author">By Jane Doe</span>
+            <span class="date">2026-01-04</span>
+        </div>
+    </header>
+    <div class="content">
+        <p>This is the post body with important information.</p>
+        <p>Tags: templates, documentation</p>
+    </div>
+</article>
+```
+
+**Notes:**
+
+- Variables can be used within block content
+- Multiple blocks can be overridden in a single child template
+- Parent template defines the overall structure; child provides specific content
+
+---
+
+### Example 19: Template Inclusion with Include
+
+The `{% include %}` directive inserts another template's content at that point
+in the current template.
+
+**Header Template (header.html):**
+
+```html
+<header>
+    <h1>My Website</h1>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+    </nav>
+</header>
+```
+
+**Footer Template (footer.html):**
+
+```html
+<footer>
+    <p>&copy; 2026 My Website. All rights reserved.</p>
+</footer>
+```
+
+**Main Template:**
+
+```html
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ title }}</title>
+    </head>
+    <body>
+        {% include 'header.html' %}
+
+        <main>
+            <h2>{{ heading }}</h2>
+            <p>{{ content }}</p>
+        </main>
+
+        {% include 'footer.html' %}
+    </body>
+</html>
+```
+
+**Data (JSON):**
+
+```json
+{
+    "title": "Welcome Page",
+    "heading": "Welcome!",
+    "content": "This is the main content of the page."
+}
+```
+
+**Output:**
+
+```html
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Welcome Page</title>
+    </head>
+    <body>
+        <header>
+            <h1>My Website</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/about">About</a>
+            </nav>
+        </header>
+
+        <main>
+            <h2>Welcome!</h2>
+            <p>This is the main content of the page.</p>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 My Website. All rights reserved.</p>
+        </footer>
+    </body>
+</html>
+```
+
+**Notes:**
+
+- Included templates have access to the same data and functions as the parent
+- Multiple includes can be used in a single template
+- Includes are useful for reusable components like headers, footers, and
+  sidebars
+
+---
+
+### Example 20: Include with Control Structures
+
+Included templates can contain any template features, including loops and
+conditionals.
+
+**Item List Template (items.html):**
+
+```html
+{% for item in items %}
+<div class="item">
+    <h3>{{ item.name }}</h3>
+    <p>{{ item.description }}</p>
+    {% if item.price %}
+    <span class="price">${{ item.price }}</span>
+    {% endif %}
+</div>
+{% endfor %}
+```
+
+**Main Template:**
+
+```html
+<div class="catalog">
+    <h1>Product Catalog</h1>
+    {% include 'items.html' %}
+</div>
+```
+
+**Data (JSON):**
+
+```json
+{
+    "items": [
+        {
+            "name": "Widget",
+            "description": "A useful widget",
+            "price": 29.99
+        },
+        {
+            "name": "Gadget",
+            "description": "An amazing gadget",
+            "price": 49.99
+        },
+        {
+            "name": "Free Sample",
+            "description": "Try it free"
+        }
+    ]
+}
+```
+
+**Output:**
+
+```html
+<div class="catalog">
+    <h1>Product Catalog</h1>
+    <div class="item">
+        <h3>Widget</h3>
+        <p>A useful widget</p>
+        <span class="price">$29.99</span>
+    </div>
+    <div class="item">
+        <h3>Gadget</h3>
+        <p>An amazing gadget</p>
+        <span class="price">$49.99</span>
+    </div>
+    <div class="item">
+        <h3>Free Sample</h3>
+        <p>Try it free</p>
+    </div>
+</div>
+```
+
+**Notes:**
+
+- Included templates can use loops, conditionals, and all other template
+  features
+- Data is shared between the main template and included templates
+- This is useful for creating reusable list/card components
+
+---
+
+### Example 21: Nested Includes
+
+Included templates can themselves include other templates.
+
+**Icon Template (icon.html):**
+
+```html
+<i class="icon-{{ type }}"></i>
+```
+
+**Button Template (button.html):**
+
+```html
+<button class="{{ style }}">
+    {% include 'icon.html' %} {{ text }}
+</button>
+```
+
+**Main Template:**
+
+```html
+<div class="actions">
+    {% include 'button.html' %}
+</div>
+```
+
+**Data (JSON):**
+
+```json
+{
+    "type": "save",
+    "style": "btn-primary",
+    "text": "Save Changes"
+}
+```
+
+**Output:**
+
+```html
+<div class="actions">
+    <button class="btn-primary">
+        <i class="icon-save"></i>
+        Save Changes
+    </button>
+</div>
+```
+
+**Notes:**
+
+- Nested includes allow building complex components from simple parts
+- All included templates share the same data context
+- This enables component-based template design
+
+---
+
 ## Custom Filters
 
 Filters can be provided as custom functions when rendering templates. The `raw`
@@ -1022,3 +1488,14 @@ $html = $template->render(
 - Paths use dot notation for nested access: `{{ user.profile.name }}`
 - For loops can iterate with values only or with key-value pairs
 - Comments are completely removed from output and don't affect whitespace
+
+### Template Inheritance Notes
+
+- The `{% extends %}` directive must be the first non-whitespace element in a
+  child template
+- Template inheritance requires a `TemplateLoader` function to be configured
+- Child block content completely replaces parent block content (no indentation
+  inheritance)
+- Blocks not overridden in the child will use the parent's default content
+- Blocks can be nested, and each can be independently overridden
+- Variables, expressions, and all other template features work inside blocks

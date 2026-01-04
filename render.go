@@ -57,6 +57,13 @@ func (t *Template) renderChildren(node *TreeNode, data map[string]any, functions
 			}
 			result += output
 			ifNodes = []*TreeNode{}
+		case "include":
+			output, err := t.renderIncludeNode(child, data, functions)
+			if err != nil {
+				return "", err
+			}
+			result += output
+			ifNodes = []*TreeNode{}
 		case "lit":
 			result += child.Expression
 			ifNodes = []*TreeNode{}
@@ -349,4 +356,27 @@ func (t *Template) applyFunctions(value any, parts []string, functions map[strin
 	}
 
 	return value, nil
+}
+
+// renderIncludeNode renders an 'include' node by loading and rendering another template
+func (t *Template) renderIncludeNode(node *TreeNode, data map[string]any, functions map[string]any) (string, error) {
+	if t.loader == nil {
+		return "", fmt.Errorf("template loader not configured for include directive")
+	}
+
+	// Get the template name from include expression
+	templateName := strings.Trim(node.Expression, "'\"")
+
+	// Load the included template
+	templateContent, err := t.loader(templateName)
+	if err != nil {
+		return "", fmt.Errorf("failed to load included template '%s': %v", templateName, err)
+	}
+
+	// Parse and render the included template
+	tokens := t.tokenize(templateContent)
+	tree := t.createSyntaxTree(tokens)
+
+	// Render the included template with the same data and functions
+	return t.renderChildren(tree, data, functions)
 }

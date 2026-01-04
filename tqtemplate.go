@@ -309,6 +309,9 @@ func (t *Template) createSyntaxTree(tokens []string) *TreeNode {
 			} else if strings.HasPrefix(token, "extends ") {
 				nodeType = "extends"
 				expression = strings.TrimSpace(token[8:])
+			} else if strings.HasPrefix(token, "include ") {
+				nodeType = "include"
+				expression = strings.TrimSpace(token[8:])
 			} else {
 				nodeType = "var"
 				expression = token
@@ -333,7 +336,7 @@ func (t *Template) createSyntaxTree(tokens []string) *TreeNode {
 				current = node
 			}
 
-			if nodeType == "extends" {
+			if nodeType == "extends" || nodeType == "include" {
 				node := &TreeNode{Type: nodeType, Expression: expression}
 				current.Children = append(current.Children, node)
 			}
