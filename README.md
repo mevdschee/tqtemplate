@@ -1,5 +1,7 @@
 # tqtemplate
 
+Simple yet powerful Jinja-like templating system for HTML written in Go.
+
 ## Overview
 
 TQTemplate engine provides a simple yet powerful Jinja-like templating system with 
