@@ -649,9 +649,15 @@ are HTML-safe by default with automatic escaping.
         <td>#{{ order.id }}</td>
         <td>${{ order.total }}</td>
         <td>
-            {% if order.status == "shipped" %} 🚚 Shipped {% elseif order.status
-            == "pending" %} ⏳ Pending {% elseif order.status == "delivered" %}
-            ✓ Delivered {% else %} ✗ Cancelled {% endif %}
+            {% if order.status == "shipped" %}
+            🚚 Shipped
+            {% elseif order.status == "pending" %}
+            ⏳ Pending
+            {% elseif order.status == "delivered" %}
+            ✓ Delivered
+            {% else %}
+            ✗ Cancelled
+            {% endif %}
         </td>
     </tr>
     {% endfor %}
