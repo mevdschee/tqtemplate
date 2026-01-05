@@ -165,6 +165,8 @@ func main() {
 - **Comments** with `{# #}` syntax
 - **Expression evaluation** with full operator support
 - **Filters** with pipe syntax `|`
+- **Builtin filters** for common transformations
+- **Tests** with `is` keyword for value checking
 - **Nested data access** with dot notation
 - **HTML escaping** by default
 - **Raw output** with `raw` filter
