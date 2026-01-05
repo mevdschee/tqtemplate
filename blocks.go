@@ -21,8 +21,8 @@ func (t *Template) findExtendsNode(tree *TreeNode) *TreeNode {
 	return nil
 }
 
-// renderWithExtends handles template inheritance
-func (t *Template) renderWithExtends(childTree *TreeNode, extendsNode *TreeNode, data map[string]any, functions map[string]any) (string, error) {
+// renderWithExtendsAndFilters handles template inheritance
+func (t *Template) renderWithExtends(childTree *TreeNode, extendsNode *TreeNode, data map[string]any, filters map[string]any) (string, error) {
 	if t.loader == nil {
 		return "", fmt.Errorf("template loader not configured for extends directive")
 	}
@@ -44,7 +44,7 @@ func (t *Template) renderWithExtends(childTree *TreeNode, extendsNode *TreeNode,
 	childBlocks := t.collectBlocks(childTree)
 
 	// Render parent with child blocks overriding
-	return t.renderWithBlocks(parentTree, childBlocks, data, functions)
+	return t.renderWithBlocks(parentTree, childBlocks, data, filters)
 }
 
 // collectBlocks extracts all block definitions from a template tree
@@ -64,7 +64,7 @@ func (t *Template) collectBlocks(tree *TreeNode) map[string]*TreeNode {
 }
 
 // renderWithBlocks renders a tree with block overrides
-func (t *Template) renderWithBlocks(tree *TreeNode, blockOverrides map[string]*TreeNode, data map[string]any, functions map[string]any) (string, error) {
+func (t *Template) renderWithBlocks(tree *TreeNode, blockOverrides map[string]*TreeNode, data map[string]any, filters map[string]any) (string, error) {
 	result := ""
 	ifNodes := []*TreeNode{}
 
@@ -92,14 +92,14 @@ func (t *Template) renderWithBlocks(tree *TreeNode, blockOverrides map[string]*T
 				// Add preceding whitespace before override content
 				result += precedingWhitespace
 				// Render the override block (with block overrides for nested blocks)
-				output, err := t.renderWithBlocks(override, blockOverrides, data, functions)
+				output, err := t.renderWithBlocks(override, blockOverrides, data, filters)
 				if err != nil {
 					return "", err
 				}
 				result += output
 			} else {
 				// Render the default block content (with block overrides for nested blocks)
-				output, err := t.renderWithBlocks(child, blockOverrides, data, functions)
+				output, err := t.renderWithBlocks(child, blockOverrides, data, filters)
 				if err != nil {
 					return "", err
 				}
@@ -107,35 +107,35 @@ func (t *Template) renderWithBlocks(tree *TreeNode, blockOverrides map[string]*T
 			}
 			ifNodes = []*TreeNode{}
 		case "if":
-			output, err := t.renderIfNode(child, data, functions)
+			output, err := t.renderIfNode(child, data, filters)
 			if err != nil {
 				return "", err
 			}
 			result += output
 			ifNodes = []*TreeNode{child}
 		case "elseif":
-			output, err := t.renderElseIfNode(child, ifNodes, data, functions)
+			output, err := t.renderElseIfNode(child, ifNodes, data, filters)
 			if err != nil {
 				return "", err
 			}
 			result += output
 			ifNodes = append(ifNodes, child)
 		case "else":
-			output, err := t.renderElseNode(child, ifNodes, data, functions)
+			output, err := t.renderElseNode(child, ifNodes, data, filters)
 			if err != nil {
 				return "", err
 			}
 			result += output
 			ifNodes = []*TreeNode{}
 		case "for":
-			output, err := t.renderForNode(child, data, functions)
+			output, err := t.renderForNode(child, data, filters)
 			if err != nil {
 				return "", err
 			}
 			result += output
 			ifNodes = []*TreeNode{}
 		case "var":
-			output, err := t.renderVarNode(child, data, functions)
+			output, err := t.renderVarNode(child, data, filters)
 			if err != nil {
 				return "", err
 			}

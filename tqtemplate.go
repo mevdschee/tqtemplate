@@ -36,8 +36,13 @@ func NewTemplateWithLoader(loader TemplateLoader) *Template {
 	return &Template{loader: loader}
 }
 
+// Render renders a template string with the provided data
+func (t *Template) Render(template string, data map[string]any) (string, error) {
+	return t.RenderWithFilters(template, data, nil)
+}
+
 // Render renders a template string with the provided data and custom filters
-func (t *Template) Render(template string, data map[string]any, filters map[string]any) (string, error) {
+func (t *Template) RenderWithFilters(template string, data map[string]any, filters map[string]any) (string, error) {
 	tokens := t.tokenize(template)
 	tree := t.createSyntaxTree(tokens)
 

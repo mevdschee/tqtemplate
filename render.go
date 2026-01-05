@@ -8,7 +8,7 @@ import (
 )
 
 // renderChildren renders all child nodes of a given node
-func (t *Template) renderChildren(node *TreeNode, data map[string]any, functions map[string]any) (string, error) {
+func (t *Template) renderChildren(node *TreeNode, data map[string]any, filters map[string]any) (string, error) {
 	result := ""
 	ifNodes := []*TreeNode{}
 
@@ -16,49 +16,49 @@ func (t *Template) renderChildren(node *TreeNode, data map[string]any, functions
 		switch child.Type {
 		case "block":
 			// Render block content directly when not in extends context
-			output, err := t.renderChildren(child, data, functions)
+			output, err := t.renderChildren(child, data, filters)
 			if err != nil {
 				return "", err
 			}
 			result += output
 			ifNodes = []*TreeNode{}
 		case "if":
-			output, err := t.renderIfNode(child, data, functions)
+			output, err := t.renderIfNode(child, data, filters)
 			if err != nil {
 				return "", err
 			}
 			result += output
 			ifNodes = []*TreeNode{child}
 		case "elseif":
-			output, err := t.renderElseIfNode(child, ifNodes, data, functions)
+			output, err := t.renderElseIfNode(child, ifNodes, data, filters)
 			if err != nil {
 				return "", err
 			}
 			result += output
 			ifNodes = append(ifNodes, child)
 		case "else":
-			output, err := t.renderElseNode(child, ifNodes, data, functions)
+			output, err := t.renderElseNode(child, ifNodes, data, filters)
 			if err != nil {
 				return "", err
 			}
 			result += output
 			ifNodes = []*TreeNode{}
 		case "for":
-			output, err := t.renderForNode(child, data, functions)
+			output, err := t.renderForNode(child, data, filters)
 			if err != nil {
 				return "", err
 			}
 			result += output
 			ifNodes = []*TreeNode{}
 		case "var":
-			output, err := t.renderVarNode(child, data, functions)
+			output, err := t.renderVarNode(child, data, filters)
 			if err != nil {
 				return "", err
 			}
 			result += output
 			ifNodes = []*TreeNode{}
 		case "include":
-			output, err := t.renderIncludeNode(child, data, functions)
+			output, err := t.renderIncludeNode(child, data, filters)
 			if err != nil {
 				return "", err
 			}
@@ -74,7 +74,7 @@ func (t *Template) renderChildren(node *TreeNode, data map[string]any, functions
 }
 
 // renderIfNode renders an 'if' conditional node
-func (t *Template) renderIfNode(node *TreeNode, data map[string]any, functions map[string]any) (string, error) {
+func (t *Template) renderIfNode(node *TreeNode, data map[string]any, filters map[string]any) (string, error) {
 	expressionStr := node.Expression
 
 	// Preprocess "is" tests
@@ -107,14 +107,14 @@ func (t *Template) renderIfNode(node *TreeNode, data map[string]any, functions m
 		return t.escapeValue("{% if " + expressionStr + "!!" + err.Error() + " %}"), nil
 	}
 
-	value, err = t.applyFunctions(value, filterParts, functions, data)
+	value, err = t.applyfilters(value, filterParts, filters, data)
 	if err != nil {
 		return t.escapeValue("{% if " + expressionStr + "!!" + err.Error() + " %}"), nil
 	}
 
 	result := ""
 	if toBool(value) {
-		output, err := t.renderChildren(node, data, functions)
+		output, err := t.renderChildren(node, data, filters)
 		if err != nil {
 			return "", err
 		}
@@ -125,7 +125,7 @@ func (t *Template) renderIfNode(node *TreeNode, data map[string]any, functions m
 }
 
 // renderElseIfNode renders an 'elseif' conditional node
-func (t *Template) renderElseIfNode(node *TreeNode, ifNodes []*TreeNode, data map[string]any, functions map[string]any) (string, error) {
+func (t *Template) renderElseIfNode(node *TreeNode, ifNodes []*TreeNode, data map[string]any, filters map[string]any) (string, error) {
 	if len(ifNodes) < 1 || ifNodes[0].Type != "if" {
 		return t.escapeValue("{% elseif !!could not find matching `if` %}"), nil
 	}
@@ -172,13 +172,13 @@ func (t *Template) renderElseIfNode(node *TreeNode, ifNodes []*TreeNode, data ma
 			return t.escapeValue("{% elseif " + expressionStr + "!!" + err.Error() + " %}"), nil
 		}
 
-		value, err = t.applyFunctions(value, filterParts, functions, data)
+		value, err = t.applyfilters(value, filterParts, filters, data)
 		if err != nil {
 			return t.escapeValue("{% elseif " + expressionStr + "!!" + err.Error() + " %}"), nil
 		}
 
 		if toBool(value) {
-			output, err := t.renderChildren(node, data, functions)
+			output, err := t.renderChildren(node, data, filters)
 			if err != nil {
 				return "", err
 			}
@@ -193,7 +193,7 @@ func (t *Template) renderElseIfNode(node *TreeNode, ifNodes []*TreeNode, data ma
 }
 
 // renderElseNode renders an 'else' node
-func (t *Template) renderElseNode(node *TreeNode, ifNodes []*TreeNode, data map[string]any, functions map[string]any) (string, error) {
+func (t *Template) renderElseNode(node *TreeNode, ifNodes []*TreeNode, data map[string]any, filters map[string]any) (string, error) {
 	if len(ifNodes) < 1 || ifNodes[0].Type != "if" {
 		return t.escapeValue("{% else !!could not find matching `if` %}"), nil
 	}
@@ -208,7 +208,7 @@ func (t *Template) renderElseNode(node *TreeNode, ifNodes []*TreeNode, data map[
 	}
 
 	if !anyTrue {
-		output, err := t.renderChildren(node, data, functions)
+		output, err := t.renderChildren(node, data, filters)
 		if err != nil {
 			return "", err
 		}
@@ -219,7 +219,7 @@ func (t *Template) renderElseNode(node *TreeNode, ifNodes []*TreeNode, data map[
 }
 
 // renderForNode renders a 'for' loop node
-func (t *Template) renderForNode(node *TreeNode, data map[string]any, functions map[string]any) (string, error) {
+func (t *Template) renderForNode(node *TreeNode, data map[string]any, filters map[string]any) (string, error) {
 	expressionStr := node.Expression
 
 	// Parse "for key, value in array" or "for value in array"
@@ -253,7 +253,7 @@ func (t *Template) renderForNode(node *TreeNode, data map[string]any, functions 
 		return t.escapeValue("{% for " + expressionStr + "!!" + err.Error() + " %}"), nil
 	}
 
-	value, err = t.applyFunctions(value, filterParts, functions, data)
+	value, err = t.applyfilters(value, filterParts, filters, data)
 	if err != nil {
 		return t.escapeValue("{% for " + expressionStr + "!!" + err.Error() + " %}"), nil
 	}
@@ -289,7 +289,7 @@ func (t *Template) renderForNode(node *TreeNode, data map[string]any, functions 
 		} else {
 			newData[varName] = item
 		}
-		output, err := t.renderChildren(node, newData, functions)
+		output, err := t.renderChildren(node, newData, filters)
 		if err != nil {
 			return "", err
 		}
@@ -300,7 +300,7 @@ func (t *Template) renderForNode(node *TreeNode, data map[string]any, functions 
 }
 
 // renderVarNode renders a variable interpolation node
-func (t *Template) renderVarNode(node *TreeNode, data map[string]any, functions map[string]any) (string, error) {
+func (t *Template) renderVarNode(node *TreeNode, data map[string]any, filters map[string]any) (string, error) {
 	expressionStr := node.Expression
 
 	// Preprocess "is" tests
@@ -321,7 +321,7 @@ func (t *Template) renderVarNode(node *TreeNode, data map[string]any, functions 
 		return t.escapeValue("{{" + expressionStr + "!!" + err.Error() + "}}"), nil
 	}
 
-	value, err = t.applyFunctions(value, filterParts, functions, data)
+	value, err = t.applyfilters(value, filterParts, filters, data)
 	if err != nil {
 		return t.escapeValue("{{" + expressionStr + "!!" + err.Error() + "}}"), nil
 	}
@@ -353,8 +353,8 @@ func (t *Template) resolvePath(path string, data map[string]any) (any, error) {
 	return current, nil
 }
 
-// applyFunctions applies a chain of filter functions to a value
-func (t *Template) applyFunctions(value any, parts []string, functions map[string]any, data map[string]any) (any, error) {
+// applyfilters applies a chain of filter filters to a value
+func (t *Template) applyfilters(value any, parts []string, filters map[string]any, data map[string]any) (any, error) {
 	for _, part := range parts {
 		funcParts := t.explodeRespectingQuotes("(", strings.TrimSuffix(part, ")"), 2)
 		funcName := funcParts[0]
@@ -401,14 +401,14 @@ func (t *Template) applyFunctions(value any, parts []string, functions map[strin
 		allArgs := append([]any{value}, arguments...)
 
 		// Call the function
-		if fn, exists := functions[funcName]; exists {
+		if fn, exists := filters[funcName]; exists {
 			result, err := callFunction(fn, allArgs)
 			if err != nil {
 				return nil, err
 			}
 			value = result
 		} else {
-			return nil, fmt.Errorf("function `%s` not found", funcName)
+			return nil, fmt.Errorf("filter `%s` not found", funcName)
 		}
 	}
 
@@ -416,7 +416,7 @@ func (t *Template) applyFunctions(value any, parts []string, functions map[strin
 }
 
 // renderIncludeNode renders an 'include' node by loading and rendering another template
-func (t *Template) renderIncludeNode(node *TreeNode, data map[string]any, functions map[string]any) (string, error) {
+func (t *Template) renderIncludeNode(node *TreeNode, data map[string]any, filters map[string]any) (string, error) {
 	if t.loader == nil {
 		return "", fmt.Errorf("template loader not configured for include directive")
 	}
@@ -434,6 +434,6 @@ func (t *Template) renderIncludeNode(node *TreeNode, data map[string]any, functi
 	tokens := t.tokenize(templateContent)
 	tree := t.createSyntaxTree(tokens)
 
-	// Render the included template with the same data and functions
-	return t.renderChildren(tree, data, functions)
+	// Render the included template with the same data and filters
+	return t.renderChildren(tree, data, filters)
 }
