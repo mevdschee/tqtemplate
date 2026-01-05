@@ -98,8 +98,8 @@ func (t *Template) renderIfNode(node *TreeNode, data map[string]any, filters map
 		strings.Contains(testFilter, "__istest__(\"undefined\")") ||
 		strings.Contains(testFilter, "__isnot__(\"defined\")") ||
 		strings.Contains(testFilter, "__isnot__(\"undefined\")")) {
-		// For defined/undefined tests, treat error as undefined value (nil)
-		value = nil
+		// For defined/undefined tests, use sentinel value to indicate undefined
+		value = undefinedValue
 		err = nil
 	}
 
@@ -163,8 +163,8 @@ func (t *Template) renderElseIfNode(node *TreeNode, ifNodes []*TreeNode, data ma
 			strings.Contains(testFilter, "__istest__(\"undefined\")") ||
 			strings.Contains(testFilter, "__isnot__(\"defined\")") ||
 			strings.Contains(testFilter, "__isnot__(\"undefined\")")) {
-			// For defined/undefined tests, treat error as undefined value (nil)
-			value = nil
+			// For defined/undefined tests, use sentinel value to indicate undefined
+			value = undefinedValue
 			err = nil
 		}
 

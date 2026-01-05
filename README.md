@@ -1791,7 +1791,7 @@ Tests are used with the `is` keyword:
 
 #### `defined`
 
-Check if a variable is defined (not nil).
+Check if a variable is defined
 
 ```
 {% if user is defined %}
@@ -1803,7 +1803,7 @@ Check if a variable is defined (not nil).
 
 #### `undefined`
 
-Check if a variable is undefined (nil). Opposite of `defined`.
+Check if a variable is undefined. Opposite of `defined`.
 
 ```
 {% if missing is undefined %}

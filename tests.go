@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+// undefinedSentinel is a sentinel type to distinguish between nil and undefined
+type undefinedSentinel struct{}
+
+var undefinedValue = &undefinedSentinel{}
+
 // getBuiltinTests returns all builtin tests for the template engine
 func getBuiltinTests() map[string]any {
 	return map[string]any{
@@ -57,14 +62,21 @@ func filterIsNot(value any, args ...any) bool {
 	return !filterIsTest(value, args...)
 }
 
-// testDefined returns true if the value is not nil
+// testDefined returns true if the value is not undefined (even if it's nil)
 func testDefined(value any) bool {
-	return value != nil
+	// Check if it's the undefined sentinel
+	if _, isUndefined := value.(*undefinedSentinel); isUndefined {
+		return false
+	}
+	// nil is still defined if the variable exists in the data
+	return true
 }
 
-// testUndefined returns true if the value is nil
+// testUndefined returns true if the value is undefined (not just nil)
 func testUndefined(value any) bool {
-	return value == nil
+	// Check if it's the undefined sentinel
+	_, isUndefined := value.(*undefinedSentinel)
+	return isUndefined
 }
 
 // testDivisibleBy checks if a number is divisible by another number

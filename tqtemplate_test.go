@@ -1177,6 +1177,13 @@ func TestIsDefined(t *testing.T) {
 	if result != "no" {
 		t.Errorf("Expected 'no', got '%s'", result)
 	}
+
+	// Test variable set to nil (nil is still defined)
+	tmpl = "{% if variable is defined %}yes{% else %}no{% endif %}"
+	result, _ = template.Render(tmpl, map[string]any{"variable": nil})
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
 }
 
 func TestIsUndefined(t *testing.T) {
@@ -1189,6 +1196,13 @@ func TestIsUndefined(t *testing.T) {
 	// Test defined variable
 	tmpl = "{% if variable is undefined %}yes{% else %}no{% endif %}"
 	result, _ = template.Render(tmpl, map[string]any{"variable": "value"})
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+
+	// Test variable set to nil (nil is still defined)
+	tmpl = "{% if variable is undefined %}yes{% else %}no{% endif %}"
+	result, _ = template.Render(tmpl, map[string]any{"variable": nil})
 	if result != "no" {
 		t.Errorf("Expected 'no', got '%s'", result)
 	}
