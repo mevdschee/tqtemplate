@@ -168,7 +168,7 @@ func main() {
 - **Nested data access** with dot notation
 - **HTML escaping** by default
 - **Raw output** with `raw` filter
-- **Custom functions** as filters
+- **Custom filters and tests**
 
 ---
 
