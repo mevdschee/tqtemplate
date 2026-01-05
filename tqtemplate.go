@@ -66,22 +66,31 @@ func (t *Template) Render(template string, data map[string]any) (string, error) 
 		filters[name] = fn
 	}
 
+	// Collect all tests (builtin + custom)
+	allTests := make(map[string]any)
+
 	// Register all builtin tests
 	tests := getBuiltinTests()
 	for name, fn := range tests {
+		allTests[name] = fn
 		filters[name] = fn
-	}
-
-	// Add custom filters (allow user overrides)
-	if t.filters != nil {
-		for name, fn := range t.filters {
-			filters[name] = fn
-		}
 	}
 
 	// Add custom tests (allow user overrides)
 	if t.tests != nil {
 		for name, fn := range t.tests {
+			allTests[name] = fn
+			filters[name] = fn
+		}
+	}
+
+	// Create __istest__ and __isnot__ filters with access to all tests
+	filters["__istest__"] = createFilterIsTest(allTests)
+	filters["__isnot__"] = createFilterIsNot(allTests)
+
+	// Add custom filters (allow user overrides)
+	if t.filters != nil {
+		for name, fn := range t.filters {
 			filters[name] = fn
 		}
 	}

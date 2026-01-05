@@ -179,6 +179,11 @@ func callFunction(fn any, args []any) (any, error) {
 			return f(args[0], args[1]), nil
 		}
 		return nil, fmt.Errorf("invalid arguments for function")
+	case func(any, any, any) bool:
+		if len(args) >= 3 {
+			return f(args[0], args[1], args[2]), nil
+		}
+		return nil, fmt.Errorf("invalid arguments for function")
 	case func(int, int) bool:
 		if len(args) >= 2 {
 			left, _ := toNumber(args[0])

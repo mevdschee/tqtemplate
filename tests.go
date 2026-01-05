@@ -22,44 +22,64 @@ func getBuiltinTests() map[string]any {
 		"null":        testNull,
 		"number":      testNumber,
 		"string":      testString,
-		"__istest__":  filterIsTest,
-		"__isnot__":   filterIsNot,
 	}
 }
 
-// filterIsTest applies a test function to a value
-func filterIsTest(value any, args ...any) bool {
-	if len(args) == 0 {
-		return false
-	}
+// createFilterIsTest creates a filterIsTest function with access to all tests (builtin and custom)
+func createFilterIsTest(allTests map[string]any) func(any, ...any) bool {
+	return func(value any, args ...any) bool {
+		if len(args) == 0 {
+			return false
+		}
 
-	// First arg is the test name
-	testName := toString(args[0])
+		// First arg is the test name
+		testName := toString(args[0])
 
-	// Get the test function
-	tests := getBuiltinTests()
-	testFn, exists := tests[testName]
-	if !exists {
-		return false
-	}
+		// Get the test function from all available tests
+		testFn, exists := allTests[testName]
+		if !exists {
+			return false
+		}
 
-	// Call the test with remaining args
-	remaining := args[1:]
+		// Call the test with remaining args
+		remaining := args[1:]
 
-	// Type switch on test function signature
-	switch fn := testFn.(type) {
-	case func(any) bool:
-		return fn(value)
-	case func(any, ...any) bool:
-		return fn(value, remaining...)
-	default:
-		return false
+		// Type switch on test function signature
+		switch fn := testFn.(type) {
+		case func(any) bool:
+			return fn(value)
+		case func(any, ...any) bool:
+			return fn(value, remaining...)
+		case func(any, any) bool:
+			// Custom test with one argument
+			if len(remaining) > 0 {
+				return fn(value, remaining[0])
+			}
+			return false
+		case func(any, any, any) bool:
+			// Custom test with two arguments
+			if len(remaining) >= 2 {
+				return fn(value, remaining[0], remaining[1])
+			}
+			return false
+		case func(any, any, any, any) bool:
+			// Custom test with three arguments
+			if len(remaining) >= 3 {
+				return fn(value, remaining[0], remaining[1], remaining[2])
+			}
+			return false
+		default:
+			return false
+		}
 	}
 }
 
-// filterIsNot is the negation of filterIsTest
-func filterIsNot(value any, args ...any) bool {
-	return !filterIsTest(value, args...)
+// createFilterIsNot creates a filterIsNot function with access to all tests (builtin and custom)
+func createFilterIsNot(allTests map[string]any) func(any, ...any) bool {
+	return func(value any, args ...any) bool {
+		filterIsTest := createFilterIsTest(allTests)
+		return !filterIsTest(value, args...)
+	}
 }
 
 // testDefined returns true if the value is not undefined (even if it's nil)

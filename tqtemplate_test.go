@@ -1385,3 +1385,167 @@ func TestMultipleIsTests(t *testing.T) {
 		t.Errorf("Expected 'yes', got '%s'", result)
 	}
 }
+
+func TestCustomTestSimple(t *testing.T) {
+	tests := map[string]any{
+		"positive": func(value any) bool {
+			if num, ok := value.(int); ok {
+				return num > 0
+			}
+			if num, ok := value.(float64); ok {
+				return num > 0
+			}
+			return false
+		},
+	}
+	tmpl := NewTemplateWithLoaderAndFiltersAndTests(nil, nil, tests)
+	result, _ := tmpl.Render("{% if num is positive %}yes{% else %}no{% endif %}", map[string]any{"num": 5})
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+
+	result, _ = tmpl.Render("{% if num is positive %}yes{% else %}no{% endif %}", map[string]any{"num": -3})
+	if result != "no" {
+		t.Errorf("Expected 'no', got '%s'", result)
+	}
+}
+
+func TestCustomTestWithArgument(t *testing.T) {
+	tests := map[string]any{
+		"greaterthan": func(value any, threshold any) bool {
+			v, _ := toNumber(value)
+			th, _ := toNumber(threshold)
+			return v > th
+		},
+	}
+	tmpl := NewTemplateWithLoaderAndFiltersAndTests(nil, nil, tests)
+	result, _ := tmpl.Render("{% if age is greaterthan(18) %}adult{% else %}minor{% endif %}", map[string]any{"age": 25})
+	if result != "adult" {
+		t.Errorf("Expected 'adult', got '%s'", result)
+	}
+
+	result, _ = tmpl.Render("{% if age is greaterthan(18) %}adult{% else %}minor{% endif %}", map[string]any{"age": 15})
+	if result != "minor" {
+		t.Errorf("Expected 'minor', got '%s'", result)
+	}
+}
+
+func TestCustomTestWithNot(t *testing.T) {
+	tests := map[string]any{
+		"empty": func(value any) bool {
+			if value == nil {
+				return true
+			}
+			if str, ok := value.(string); ok {
+				return str == ""
+			}
+			if arr, ok := value.([]any); ok {
+				return len(arr) == 0
+			}
+			return false
+		},
+	}
+	tmpl := NewTemplateWithLoaderAndFiltersAndTests(nil, nil, tests)
+	result, _ := tmpl.Render("{% if name is not empty %}{{ name }}{% else %}no name{% endif %}", map[string]any{"name": "John"})
+	if result != "John" {
+		t.Errorf("Expected 'John', got '%s'", result)
+	}
+
+	result, _ = tmpl.Render("{% if name is not empty %}{{ name }}{% else %}no name{% endif %}", map[string]any{"name": ""})
+	if result != "no name" {
+		t.Errorf("Expected 'no name', got '%s'", result)
+	}
+}
+
+func TestCustomTestInVariableExpression(t *testing.T) {
+	tests := map[string]any{
+		"adult": func(value any) bool {
+			if age, ok := value.(int); ok {
+				return age >= 18
+			}
+			return false
+		},
+	}
+	tmpl := NewTemplateWithLoaderAndFiltersAndTests(nil, nil, tests)
+	result, _ := tmpl.Render("{{ age is adult }}", map[string]any{"age": 21})
+	if result != "1" {
+		t.Errorf("Expected '1', got '%s'", result)
+	}
+
+	result, _ = tmpl.Render("{{ age is adult }}", map[string]any{"age": 16})
+	if result != "" {
+		t.Errorf("Expected '', got '%s'", result)
+	}
+}
+
+func TestCustomTestOverrideBuiltin(t *testing.T) {
+	tests := map[string]any{
+		"even": func(value any) bool {
+			// Custom "even" that considers 2 as odd (override builtin)
+			if num, ok := value.(int); ok {
+				return num != 2 && num%2 == 0
+			}
+			return false
+		},
+	}
+	tmpl := NewTemplateWithLoaderAndFiltersAndTests(nil, nil, tests)
+	result, _ := tmpl.Render("{% if num is even %}yes{% else %}no{% endif %}", map[string]any{"num": 2})
+	if result != "no" {
+		t.Errorf("Expected 'no' (custom override), got '%s'", result)
+	}
+
+	result, _ = tmpl.Render("{% if num is even %}yes{% else %}no{% endif %}", map[string]any{"num": 4})
+	if result != "yes" {
+		t.Errorf("Expected 'yes', got '%s'", result)
+	}
+}
+
+func TestCustomTestWithMultipleArguments(t *testing.T) {
+	tests := map[string]any{
+		"between": func(value any, min any, max any) bool {
+			v, _ := toNumber(value)
+			minVal, _ := toNumber(min)
+			maxVal, _ := toNumber(max)
+			return v >= minVal && v <= maxVal
+		},
+	}
+	tmpl := NewTemplateWithLoaderAndFiltersAndTests(nil, nil, tests)
+	result, _ := tmpl.Render("{% if age is between(18, 65) %}working age{% else %}not working age{% endif %}", map[string]any{"age": 30})
+	if result != "working age" {
+		t.Errorf("Expected 'working age', got '%s'", result)
+	}
+
+	result, _ = tmpl.Render("{% if age is between(18, 65) %}working age{% else %}not working age{% endif %}", map[string]any{"age": 70})
+	if result != "not working age" {
+		t.Errorf("Expected 'not working age', got '%s'", result)
+	}
+}
+
+func TestCustomTestsWithCustomFilters(t *testing.T) {
+	filters := map[string]any{
+		"double": func(value any) int {
+			if num, ok := value.(int); ok {
+				return num * 2
+			}
+			return 0
+		},
+	}
+	tests := map[string]any{
+		"large": func(value any) bool {
+			if num, ok := value.(int); ok {
+				return num > 10
+			}
+			return false
+		},
+	}
+	tmpl := NewTemplateWithLoaderAndFiltersAndTests(nil, filters, tests)
+	result, _ := tmpl.Render("{% if num|double is large %}yes{% else %}no{% endif %}", map[string]any{"num": 6})
+	if result != "yes" {
+		t.Errorf("Expected 'yes' (6*2=12 is large), got '%s'", result)
+	}
+
+	result, _ = tmpl.Render("{% if num|double is large %}yes{% else %}no{% endif %}", map[string]any{"num": 3})
+	if result != "no" {
+		t.Errorf("Expected 'no' (3*2=6 is not large), got '%s'", result)
+	}
+}
