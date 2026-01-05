@@ -26,7 +26,7 @@ go get github.com/mevdschee/tqtemplate
 ```go
 package main
 
-import (
+import(
     "fmt"
     "github.com/mevdschee/tqtemplate"
 )
@@ -1730,8 +1730,8 @@ Filters can be chained together:
 
 ## Custom Filters
 
-Custom filters can be provided as functions when rendering templates. All builtin
-filters listed above are available automatically.
+Custom filters can be provided when creating the template engine. All builtin
+filters listed above are available automatically, but can be overridden.
 
 **Go Usage Example:**
 
@@ -1745,8 +1745,6 @@ import (
 )
 
 func main() {
-    template := tqtemplate.NewTemplate()
-    
     data := map[string]any{
         "name": "john doe",
         "date": "May 13, 1980",
@@ -1761,10 +1759,10 @@ func main() {
         },
     }
     
+    template := tqtemplate.NewTemplateWithLoaderAndFilters(nil, filters)
     result, _ := template.Render(
         `Hello {{ name|upper }}, date: {{ date|dateFormat("2006-01-02") }}`,
         data,
-        filters,
     )
     fmt.Println(result)
     // Output: Hello JOHN DOE, date: 1980-05-13
@@ -1903,6 +1901,45 @@ Tests can also be used in variable expressions and will output `1` for true or e
 
 ```
 {{ num is even }}  {# outputs "1" if num is even, "" otherwise #}
+```
+
+## Custom Tests
+
+Custom tests can be provided when creating the template engine. All builtin
+tests listed above are available automatically, but can be overridden.
+
+**Go Usage Example:**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/mevdschee/tqtemplate"
+)
+
+func main() {
+    data := map[string]any{
+        "age": 25,
+    }
+    
+    tests := map[string]any{
+        "adult": func(value any) bool {
+            if age, ok := value.(int); ok {
+                return age >= 18
+            }
+            return false
+        },
+    }
+    
+    template := tqtemplate.NewTemplate(nil, tests)
+    result, _ := template.Render(
+        `{% if age is adult %}You are an adult{% else %}You are a minor{% endif %}`,
+        data,
+    )
+    fmt.Println(result)
+    // Output: You are an adult
+}
 ```
 
 ---

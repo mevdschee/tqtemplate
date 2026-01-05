@@ -16,7 +16,8 @@ func TestRenderWithCustomFunction(t *testing.T) {
 	filters := map[string]any{
 		"capitalize": func(s string) string { return strings.ToUpper(s[:1]) + s[1:] },
 	}
-	result, _ := template.RenderWithFilters("hello {{ name|capitalize }}", map[string]any{"name": "world"}, filters)
+	tmpl := NewTemplateWithLoaderAndFilters(nil, filters)
+	result, _ := tmpl.Render("hello {{ name|capitalize }}", map[string]any{"name": "world"})
 	if result != "hello World" {
 		t.Errorf("Expected 'hello World', got '%s'", result)
 	}
@@ -33,7 +34,8 @@ func TestRenderWithMissingFunction(t *testing.T) {
 	filters := map[string]any{
 		"capitalize": func(s string) string { return strings.ToUpper(s[:1]) + s[1:] },
 	}
-	result, _ := template.RenderWithFilters("hello {{ name|failure }}", map[string]any{"name": "world"}, filters)
+	tmpl := NewTemplateWithLoaderAndFilters(nil, filters)
+	result, _ := tmpl.Render("hello {{ name|failure }}", map[string]any{"name": "world"})
 	if result != "hello {{name|failure!!filter `failure` not found}}" {
 		t.Errorf("Expected error message, got '%s'", result)
 	}
@@ -43,9 +45,10 @@ func TestRenderIfWithNestedPath(t *testing.T) {
 	filters := map[string]any{
 		"eq": func(a, b any) bool { return a == b },
 	}
-	result, _ := template.RenderWithFilters("hello {% if n.m|eq(3) %}m is 3{% endif %}", map[string]any{
+	tmpl := NewTemplateWithLoaderAndFilters(nil, filters)
+	result, _ := tmpl.Render("hello {% if n.m|eq(3) %}m is 3{% endif %}", map[string]any{
 		"n": map[string]any{"m": 3},
-	}, filters)
+	})
 	if result != "hello m is 3" {
 		t.Errorf("Expected 'hello m is 3', got '%s'", result)
 	}
@@ -65,7 +68,8 @@ func TestRenderWithFunctionLiteralArgument(t *testing.T) {
 			return t.Format("2006-01-02")
 		},
 	}
-	result, _ := template.RenderWithFilters("hello {{ name|dateFormat(\"Y-m-d\") }}", map[string]any{"name": "May 13, 1980"}, filters)
+	tmpl := NewTemplateWithLoaderAndFilters(nil, filters)
+	result, _ := tmpl.Render("hello {{ name|dateFormat(\"Y-m-d\") }}", map[string]any{"name": "May 13, 1980"})
 	if result != "hello 1980-05-13" {
 		t.Errorf("Expected 'hello 1980-05-13', got '%s'", result)
 	}
@@ -82,7 +86,8 @@ func TestRenderWithFunctionDataArgument(t *testing.T) {
 		"name":   "May 13, 1980",
 		"format": "Y-m-d",
 	}
-	result, _ := template.RenderWithFilters("hello {{ name|dateFormat(format) }}", data, filters)
+	tmpl := NewTemplateWithLoaderAndFilters(nil, filters)
+	result, _ := tmpl.Render("hello {{ name|dateFormat(format) }}", data)
 	if result != "hello 1980-05-13" {
 		t.Errorf("Expected 'hello 1980-05-13', got '%s'", result)
 	}
@@ -95,7 +100,8 @@ func TestRenderWithFunctionComplexLiteralArgument(t *testing.T) {
 			return t.Format("Jan 2, 2006")
 		},
 	}
-	result, _ := template.RenderWithFilters("hello {{ name|dateFormat(\"M j, Y\") }}", map[string]any{"name": "May 13, 1980"}, filters)
+	tmpl := NewTemplateWithLoaderAndFilters(nil, filters)
+	result, _ := tmpl.Render("hello {{ name|dateFormat(\"M j, Y\") }}", map[string]any{"name": "May 13, 1980"})
 	if result != "hello May 13, 1980" {
 		t.Errorf("Expected 'hello May 13, 1980', got '%s'", result)
 	}
@@ -108,7 +114,8 @@ func TestRenderWithFunctionArgumentWithWhitespace(t *testing.T) {
 			return t.Format("Jan 2, 2006")
 		},
 	}
-	result, _ := template.RenderWithFilters("hello {{ name|dateFormat( \"M j, Y\") }}", map[string]any{"name": "May 13, 1980"}, filters)
+	tmpl := NewTemplateWithLoaderAndFilters(nil, filters)
+	result, _ := tmpl.Render("hello {{ name|dateFormat( \"M j, Y\") }}", map[string]any{"name": "May 13, 1980"})
 	if result != "hello May 13, 1980" {
 		t.Errorf("Expected 'hello May 13, 1980', got '%s'", result)
 	}
@@ -132,7 +139,8 @@ func TestRenderWithEscapedSpecialCharacters(t *testing.T) {
 	tmpl := "hello \"{{ name|dateFormat(\" M ()}}\\\",|:.j, Y\") }}\""
 	expected := "hello \" May ()}}&#34;,|:.13, 1980\""
 
-	result, _ := template.RenderWithFilters(tmpl, map[string]any{"name": "May 13, 1980"}, filters)
+	tmplObj := NewTemplateWithLoaderAndFilters(nil, filters)
+	result, _ := tmplObj.Render(tmpl, map[string]any{"name": "May 13, 1980"})
 	if result != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, result)
 	}
@@ -185,9 +193,10 @@ func TestRenderForLoopWithIfElseIf(t *testing.T) {
 	filters := map[string]any{
 		"eq": func(a, b any) bool { return a == b },
 	}
-	result, _ := template.RenderWithFilters("hello{% for i in counts %} {% if i|eq(1) %}one{% elseif i|eq(2) %}two{% else %}three{% endif %}{% endfor %}", map[string]any{
+	tmpl := NewTemplateWithLoaderAndFilters(nil, filters)
+	result, _ := tmpl.Render("hello{% for i in counts %} {% if i|eq(1) %}one{% elseif i|eq(2) %}two{% else %}three{% endif %}{% endfor %}", map[string]any{
 		"counts": []any{1, 2, 3},
-	}, filters)
+	})
 	if result != "hello one two three" {
 		t.Errorf("Expected 'hello one two three', got '%s'", result)
 	}
@@ -1118,7 +1127,8 @@ func TestExpressionWithNewlineBeforeFilter(t *testing.T) {
 		"capitalize": func(s string) string { return strings.ToUpper(s[:1]) + s[1:] },
 	}
 	tmpl := "{{ name\n|capitalize }}"
-	result, _ := template.RenderWithFilters(tmpl, map[string]any{"name": "world"}, filters)
+	tmplObj := NewTemplateWithLoaderAndFilters(nil, filters)
+	result, _ := tmplObj.Render(tmpl, map[string]any{"name": "world"})
 	if result != "World" {
 		t.Errorf("Expected 'World', got '%s'", result)
 	}
@@ -1132,7 +1142,8 @@ func TestExpressionWithNewlineInFilterArguments(t *testing.T) {
 		},
 	}
 	tmpl := "{{ name\n|dateFormat(\n\"Y-m-d\"\n) }}"
-	result, _ := template.RenderWithFilters(tmpl, map[string]any{"name": "May 13, 1980"}, filters)
+	tmplObj := NewTemplateWithLoaderAndFilters(nil, filters)
+	result, _ := tmplObj.Render(tmpl, map[string]any{"name": "May 13, 1980"})
 	if result != "1980-05-13" {
 		t.Errorf("Expected '1980-05-13', got '%s'", result)
 	}

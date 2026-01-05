@@ -23,48 +23,65 @@ type TemplateLoader func(name string) (string, error)
 
 // Template is the main template engine
 type Template struct {
-	loader TemplateLoader
+	loader  TemplateLoader
+	filters map[string]any
+	tests   map[string]any
 }
 
 // NewTemplate creates a new template engine
 func NewTemplate() *Template {
-	return &Template{loader: nil}
+	return NewTemplateWithLoaderAndFiltersAndTests(nil, nil, nil)
 }
 
 // NewTemplateWithLoader creates a new template engine with a custom template loader
 func NewTemplateWithLoader(loader TemplateLoader) *Template {
-	return &Template{loader: loader}
+	return NewTemplateWithLoaderAndFiltersAndTests(loader, nil, nil)
+
+}
+
+// NewTemplateWithLoader creates a new template engine with a custom template loader
+func NewTemplateWithLoaderAndFilters(loader TemplateLoader, customFilters map[string]any) *Template {
+	return NewTemplateWithLoaderAndFiltersAndTests(loader, customFilters, nil)
+}
+
+func NewTemplateWithLoaderAndFiltersAndTests(loader TemplateLoader, customFilters map[string]any, customTests map[string]any) *Template {
+	return &Template{
+		loader:  loader,
+		filters: customFilters,
+		tests:   customTests,
+	}
 }
 
 // Render renders a template string with the provided data
 func (t *Template) Render(template string, data map[string]any) (string, error) {
-	return t.RenderWithFilters(template, data, nil)
-}
-
-// Render renders a template string with the provided data and custom filters
-func (t *Template) RenderWithFilters(template string, data map[string]any, filters map[string]any) (string, error) {
 	tokens := t.tokenize(template)
 	tree := t.createSyntaxTree(tokens)
 
-	// Add built-in filters and tests
-	if filters == nil {
-		filters = make(map[string]any)
-	}
+	// Initialize filters map if needed
+	filters := make(map[string]any)
 
 	// Register all builtin filters
 	builtins := getBuiltinFilters()
 	for name, fn := range builtins {
-		// Only add if not already defined (allow user overrides)
-		if _, exists := filters[name]; !exists {
-			filters[name] = fn
-		}
+		filters[name] = fn
 	}
 
 	// Register all builtin tests
 	tests := getBuiltinTests()
 	for name, fn := range tests {
-		// Only add if not already defined (allow user overrides)
-		if _, exists := filters[name]; !exists {
+		filters[name] = fn
+	}
+
+	// Add custom filters (allow user overrides)
+	if t.filters != nil {
+		for name, fn := range t.filters {
+			filters[name] = fn
+		}
+	}
+
+	// Add custom tests (allow user overrides)
+	if t.tests != nil {
+		for name, fn := range t.tests {
 			filters[name] = fn
 		}
 	}
