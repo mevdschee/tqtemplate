@@ -36,22 +36,22 @@ func NewTemplateWithLoader(loader TemplateLoader) *Template {
 	return &Template{loader: loader}
 }
 
-// Render renders a template string with the provided data and custom functions
-func (t *Template) Render(template string, data map[string]any, functions map[string]any) (string, error) {
+// Render renders a template string with the provided data and custom filters
+func (t *Template) Render(template string, data map[string]any, filters map[string]any) (string, error) {
 	tokens := t.tokenize(template)
 	tree := t.createSyntaxTree(tokens)
 
 	// Add built-in filters and tests
-	if functions == nil {
-		functions = make(map[string]any)
+	if filters == nil {
+		filters = make(map[string]any)
 	}
 
 	// Register all builtin filters
 	builtins := getBuiltinFilters()
 	for name, fn := range builtins {
 		// Only add if not already defined (allow user overrides)
-		if _, exists := functions[name]; !exists {
-			functions[name] = fn
+		if _, exists := filters[name]; !exists {
+			filters[name] = fn
 		}
 	}
 
@@ -59,8 +59,8 @@ func (t *Template) Render(template string, data map[string]any, functions map[st
 	tests := getBuiltinTests()
 	for name, fn := range tests {
 		// Only add if not already defined (allow user overrides)
-		if _, exists := functions[name]; !exists {
-			functions[name] = fn
+		if _, exists := filters[name]; !exists {
+			filters[name] = fn
 		}
 	}
 
@@ -68,10 +68,10 @@ func (t *Template) Render(template string, data map[string]any, functions map[st
 	// Extends must be the first non-literal node
 	extendsNode := t.findExtendsNode(tree)
 	if extendsNode != nil {
-		return t.renderWithExtends(tree, extendsNode, data, functions)
+		return t.renderWithExtends(tree, extendsNode, data, filters)
 	}
 
-	return t.renderChildren(tree, data, functions)
+	return t.renderChildren(tree, data, filters)
 }
 
 // escapeValue escapes a value for HTML output

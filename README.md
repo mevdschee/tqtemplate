@@ -9,6 +9,36 @@ variable interpolation, control structures, filters, and expression evaluation.
 Designed specifically for HTML output, all variable interpolation is automatically
 escaped for security.
 
+## Requirements
+
+- Go 1.24+
+
+## Installation
+
+Install the package using `go get`:
+
+```bash
+go get github.com/mevdschee/tqtemplate
+```
+
+## Usage
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/mevdschee/tqtemplate"
+)
+
+func main() {
+    template := tqtemplate.NewTemplate()
+    result, _ := template.Render("<p>{{hi}}</p>", map[string]any{"hi": "Hello world"})
+    fmt.Println(result)
+    // Outputs: <p>Hello world</p>
+}
+```
+
 ## BNF Syntax
 
 ```bnf
@@ -1311,7 +1341,7 @@ in the current template.
 
 **Notes:**
 
-- Included templates have access to the same data and functions as the parent
+- Included templates have access to the same data and filters as the parent
 - Multiple includes can be used in a single template
 - Includes are useful for reusable components like headers, footers, and
   sidebars
@@ -1700,26 +1730,45 @@ Filters can be chained together:
 
 ## Custom Filters
 
-Filters can be provided as custom functions when rendering templates. All builtin
+Custom filters can be provided as functions when rendering templates. All builtin
 filters listed above are available automatically.
 
-**PHP Usage Example:**
+**Go Usage Example:**
 
-```php
-$template = new Template('html');
+```go
+package main
 
-$data = ['name' => 'john doe', 'date' => 'May 13, 1980'];
+import (
+    "fmt"
+    "time"
+    "github.com/mevdschee/tqtemplate"
+)
 
-$functions = [
-    'dateFormat' => fn($date, $format) => date($format, strtotime($date))
-];
-
-$html = $template->render(
-    'Hello {{ name|upper }}, date: {{ date|dateFormat("Y-m-d") }}',
-    $data,
-    $functions
-);
-// Output: Hello JOHN DOE, date: 1980-05-13
+func main() {
+    template := tqtemplate.NewTemplate()
+    
+    data := map[string]any{
+        "name": "john doe",
+        "date": "May 13, 1980",
+    }
+    
+    filters := map[string]any{
+        "dateFormat": func(date any, format any) string {
+            dateStr := fmt.Sprint(date)
+            formatStr := fmt.Sprint(format)
+            t, _ := time.Parse("January 2, 2006", dateStr)
+            return t.Format(formatStr)
+        },
+    }
+    
+    result, _ := template.Render(
+        `Hello {{ name|upper }}, date: {{ date|dateFormat("2006-01-02") }}`,
+        data,
+        filters,
+    )
+    fmt.Println(result)
+    // Output: Hello JOHN DOE, date: 1980-05-13
+}
 ```
 
 ---
