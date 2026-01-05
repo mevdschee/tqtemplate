@@ -635,6 +635,52 @@ func TestNumericAdditionStillWorks(t *testing.T) {
 	}
 }
 
+func TestComplexUTF8Emoticon(t *testing.T) {
+	// Test with various complex UTF-8 emoticons and multi-byte characters
+	emoticon := "👨‍👩‍👧‍👦" // Family emoji (man, woman, girl, boy) - uses zero-width joiners
+	result, _ := template.Render("{{ emoji }}", map[string]any{"emoji": emoticon})
+	if result != emoticon {
+		t.Errorf("Expected '%s', got '%s'", emoticon, result)
+	}
+
+	// Test concatenation with emoticons
+	result, _ = template.Render("{{ greeting + \" \" + emoji }}", map[string]any{"greeting": "Hello", "emoji": "🎉🎊"})
+	if result != "Hello 🎉🎊" {
+		t.Errorf("Expected 'Hello 🎉🎊', got '%s'", result)
+	}
+
+	// Test emoticons in conditionals (using variable comparison)
+	result, _ = template.Render("{% if mood == \"😊\" %}happy{% else %}other{% endif %}", map[string]any{"mood": "😊"})
+	if result != "happy" {
+		t.Errorf("Expected 'happy', got '%s'", result)
+	}
+
+	// Test emoticons in loops
+	emojis := []any{"🐱", "🐭"}
+	result, _ = template.Render("🐶{% for animal in animals %}{{ animal }}{% endfor %}", map[string]any{"animals": emojis})
+	if result != "🐶🐱🐭" {
+		t.Errorf("Expected '🐶🐱🐭', got '%s'", result)
+	}
+
+	// Test with skin tone modifiers
+	result, _ = template.Render("{{ wave }}", map[string]any{"wave": "👋🏽"})
+	if result != "👋🏽" {
+		t.Errorf("Expected '👋🏽', got '%s'", result)
+	}
+
+	// Test with flag emoticons (regional indicators)
+	result, _ = template.Render("{{ flag }}", map[string]any{"flag": "🇺🇸"})
+	if result != "🇺🇸" {
+		t.Errorf("Expected '🇺🇸', got '%s'", result)
+	}
+
+	// Test mixed ASCII and emoticons
+	result, _ = template.Render("{{ message }} 🌍", map[string]any{"message": "Hello 世界!"})
+	if result != "Hello 世界! 🌍" {
+		t.Errorf("Expected 'Hello 世界! 🌍', got '%s'", result)
+	}
+}
+
 func TestExpressionWithNestedPaths(t *testing.T) {
 	result, _ := template.Render("{% if user.age >= 18 %}yes{% endif %}", map[string]any{"user": map[string]any{"age": 21}})
 	if result != "yes" {

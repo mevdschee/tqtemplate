@@ -3,6 +3,7 @@ package tqtemplate
 import (
 	"html"
 	"strings"
+	"unicode/utf8"
 )
 
 // RawValue marks a value that should not be escaped
@@ -195,13 +196,13 @@ func (t *Template) tokenize(template string) []string {
 			quoted := false
 			escaped := false
 			for i < length-1 {
-				ch := template[i]
+				r, size := utf8.DecodeRuneInString(template[i:])
 				if !escaped {
-					if ch == '"' {
+					if r == '"' {
 						quoted = !quoted
-					} else if ch == '\\' {
+					} else if r == '\\' {
 						escaped = true
-					} else if !quoted && ch == '%' && template[i+1] == '}' {
+					} else if !quoted && r == '%' && i+1 < length && template[i+1] == '}' {
 						tokens = append(tokens, "@"+strings.TrimSpace(expr))
 						i += 2
 
@@ -216,8 +217,8 @@ func (t *Template) tokenize(template string) []string {
 				} else {
 					escaped = false
 				}
-				expr += string(ch)
-				i++
+				expr += string(r)
+				i += size
 			}
 			continue
 		}
@@ -231,13 +232,13 @@ func (t *Template) tokenize(template string) []string {
 			quoted := false
 			escaped := false
 			for i < length-1 {
-				ch := template[i]
+				r, size := utf8.DecodeRuneInString(template[i:])
 				if !escaped {
-					if ch == '"' {
+					if r == '"' {
 						quoted = !quoted
-					} else if ch == '\\' {
+					} else if r == '\\' {
 						escaped = true
-					} else if !quoted && ch == '}' && template[i+1] == '}' {
+					} else if !quoted && r == '}' && i+1 < length && template[i+1] == '}' {
 						tokens = append(tokens, strings.TrimSpace(expr))
 						i += 2
 						break
@@ -245,15 +246,16 @@ func (t *Template) tokenize(template string) []string {
 				} else {
 					escaped = false
 				}
-				expr += string(ch)
-				i++
+				expr += string(r)
+				i += size
 			}
 			continue
 		}
 
-		// Regular character
-		literal += string(template[i])
-		i++
+		// Regular character - read full UTF-8 rune
+		r, size := utf8.DecodeRuneInString(template[i:])
+		literal += string(r)
+		i += size
 	}
 
 	tokens = append(tokens, literal)
@@ -272,8 +274,8 @@ func (t *Template) explodeRespectingQuotes(separator, str string, count int) []s
 	escaped := false
 	quoted := false
 
-	for i := 0; i < len(str); i++ {
-		ch := rune(str[i])
+	for i := 0; i < len(str); {
+		ch, size := utf8.DecodeRuneInString(str[i:])
 		if !quoted {
 			if ch == quote {
 				quoted = true
@@ -282,7 +284,7 @@ func (t *Template) explodeRespectingQuotes(separator, str string, count int) []s
 				if separator == "|" && i+1 < len(str) && str[i+1] == '|' {
 					// This is part of || operator, don't split
 					token += "||"
-					i++
+					i += 2
 					continue
 				}
 				tokens = append(tokens, token)
@@ -291,7 +293,7 @@ func (t *Template) explodeRespectingQuotes(separator, str string, count int) []s
 					break
 				}
 				token = ""
-				i += len(separator) - 1
+				i += len(separator)
 				continue
 			}
 		} else {
@@ -306,6 +308,7 @@ func (t *Template) explodeRespectingQuotes(separator, str string, count int) []s
 			}
 		}
 		token += string(ch)
+		i += size
 	}
 	tokens = append(tokens, token)
 	return tokens

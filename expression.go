@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 // ExpressionToken represents a token in an expression
@@ -57,28 +58,34 @@ func (e *Expression) tokenize(expr string) []ExpressionToken {
 	length := len(expr)
 
 	for i < length {
-		ch := expr[i]
+		// Decode the current rune properly for UTF-8
+		ch, chSize := utf8.DecodeRuneInString(expr[i:])
 
 		// Skip whitespace
-		if unicode.IsSpace(rune(ch)) {
-			i++
+		if unicode.IsSpace(ch) {
+			i += chSize
 			continue
 		}
 
 		// Handle parentheses
 		if ch == '(' || ch == ')' {
 			tokens = append(tokens, ExpressionToken{Type: "parenthesis", Value: string(ch)})
-			i++
+			i += chSize
 			continue
 		}
 
-		// Handle word-based operators (and, or, not)
-		if unicode.IsLetter(rune(ch)) {
+		// Handle word-based operators (and, or, not) - only ASCII letters
+		if ch < utf8.RuneSelf && unicode.IsLetter(ch) {
 			word := ""
 			start := i
-			for i < length && unicode.IsLetter(rune(expr[i])) {
-				word += string(expr[i])
-				i++
+			for i < length {
+				r, size := utf8.DecodeRuneInString(expr[i:])
+				if r < utf8.RuneSelf && unicode.IsLetter(r) {
+					word += string(r)
+					i += size
+				} else {
+					break
+				}
 			}
 			if _, exists := operators[word]; exists {
 				tokens = append(tokens, ExpressionToken{Type: "operator", Value: word})
@@ -101,16 +108,21 @@ func (e *Expression) tokenize(expr string) []ExpressionToken {
 		// Handle single-character operators
 		if _, exists := operators[string(ch)]; exists {
 			tokens = append(tokens, ExpressionToken{Type: "operator", Value: string(ch)})
-			i++
+			i += chSize
 			continue
 		}
 
 		// Handle numbers
-		if unicode.IsDigit(rune(ch)) || (ch == '.' && i < length-1 && unicode.IsDigit(rune(expr[i+1]))) {
+		if unicode.IsDigit(ch) || (ch == '.' && i < length-1 && unicode.IsDigit(rune(expr[i+1]))) {
 			num := ""
-			for i < length && (unicode.IsDigit(rune(expr[i])) || expr[i] == '.') {
-				num += string(expr[i])
-				i++
+			for i < length {
+				r, size := utf8.DecodeRuneInString(expr[i:])
+				if unicode.IsDigit(r) || r == '.' {
+					num += string(r)
+					i += size
+				} else {
+					break
+				}
 			}
 			tokens = append(tokens, ExpressionToken{Type: "number", Value: num})
 			continue
@@ -119,39 +131,47 @@ func (e *Expression) tokenize(expr string) []ExpressionToken {
 		// Handle string literals
 		if ch == '"' {
 			str := ""
-			i++ // Skip opening quote
+			i += chSize // Skip opening quote
 			escaped := false
 			for i < length {
+				r, size := utf8.DecodeRuneInString(expr[i:])
 				if escaped {
-					str += string(expr[i])
+					str += string(r)
 					escaped = false
-				} else if expr[i] == '\\' {
+					i += size
+				} else if r == '\\' {
 					escaped = true
-				} else if expr[i] == '"' {
-					i++ // Skip closing quote
+					i += size
+				} else if r == '"' {
+					i += size // Skip closing quote
 					break
 				} else {
-					str += string(expr[i])
+					str += string(r)
+					i += size
 				}
-				i++
 			}
 			tokens = append(tokens, ExpressionToken{Type: "string", Value: str})
 			continue
 		}
 
 		// Handle identifiers/paths (with dots for nested access)
-		if unicode.IsLetter(rune(ch)) || ch == '_' {
+		if unicode.IsLetter(ch) || ch == '_' {
 			ident := ""
-			for i < length && (unicode.IsLetter(rune(expr[i])) || unicode.IsDigit(rune(expr[i])) || expr[i] == '_' || expr[i] == '.') {
-				ident += string(expr[i])
-				i++
+			for i < length {
+				r, size := utf8.DecodeRuneInString(expr[i:])
+				if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' || r == '.' {
+					ident += string(r)
+					i += size
+				} else {
+					break
+				}
 			}
 			tokens = append(tokens, ExpressionToken{Type: "identifier", Value: ident})
 			continue
 		}
 
 		// Unknown character, skip it
-		i++
+		i += chSize
 	}
 
 	return tokens
