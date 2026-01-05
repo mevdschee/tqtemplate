@@ -1,6 +1,7 @@
 package tqtemplate
 
 import (
+	"fmt"
 	"html"
 	"strings"
 	"unicode/utf8"
@@ -51,6 +52,18 @@ func NewTemplateWithLoaderAndFiltersAndTests(loader TemplateLoader, customFilter
 		filters: customFilters,
 		tests:   customTests,
 	}
+}
+
+// RenderFile renders a template file with the provided data
+func (t *Template) RenderFile(templateFile string, data map[string]any) (string, error) {
+	if t.loader == nil {
+		return "", fmt.Errorf("no template loader defined")
+	}
+	templateContent, err := t.loader(templateFile)
+	if err != nil {
+		return "", err
+	}
+	return t.Render(templateContent, data)
 }
 
 // Render renders a template string with the provided data
