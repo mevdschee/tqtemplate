@@ -2,6 +2,8 @@
 
 Simple yet powerful Jinja-like templating system for HTML written in Go.
 
+Blog post: https://www.tqdev.com/2026-jinja-templating-engine-html-php/
+
 ## Overview
 
 TQTemplate engine provides a simple yet powerful Jinja-like templating system with 
