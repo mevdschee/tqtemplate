@@ -1,4 +1,4 @@
-# tqtemplate
+# TQTemplate
 
 Simple yet powerful Jinja-like templating system for HTML written in Go.
 
